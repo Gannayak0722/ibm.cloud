@@ -11,50 +11,48 @@ __metaclass__ = type
 
 DOCUMENTATION = r'''
 ---
-module: ibm_iam_access_group
-short_description: Manage C(iam_access_groups) for IAM Access Groups.
+module: ibm_iam_access_group_template_assignment
+short_description: Manage C(iam_access_group_template_assignments) for IAM Access Groups.
 author: 
   - Gannayak Pabra (@Gannayak0722)
   - Kavya Handadi (@kavya498)
 version_added: "1.0.0"
 description:
-  - This module creates, updates, or deletes an C(iam_access_group) resource for IAM Access Groups.
+  - This module creates, updates, or deletes an C(iam_access_group_template_assignment) resource for IAM Access Groups.
 requirements:
   - "IamAccessGroupsV2"
 options:
-  name:
-    description: "Give the access group a unique name that doesn't conflict with an existing access
-      group in the account. This field is case-insensitive and has a limit of 100
-      characters."
+  template_version:
+    description: "The version number of the template to be assigned."
     type: str
-  description:
-    description: "Assign an optional description for the access group. This field has a limit of 250
-      characters."
+  target_type:
+    description: "The type of the entity to which the template should be assigned, e.g. 'Account',
+      'AccountGroup', etc."
     type: str
-  access_group_id:
-    description: "The access group identifier."
+    choices:
+      - "Account"
+      - "AccountGroup"
+  template_id:
+    description: "The unique identifier of the template to be assigned."
     type: str
-  account_id:
-    description: "Account ID of the API keys(s) to query. If a service IAM ID is specified in iamI(id
-      then account)id must match the account of the IAM ID. If a user IAM ID is specified
-      in iamI(id then then account)id must match the account of the Authorization token."
+  target:
+    description: "The unique identifier of the entity to which the template should be assigned."
+    type: str
+  assignment_id:
+    description: "Assignment ID."
     type: str
   if_match:
-    description: "The current revision number of the group being updated. This can be found in the
-      Create/Get access group response ETag header."
+    description: "Version of the Assignment to be updated. Specify the version that you retrieved when
+      reading the Assignment. This value helps identifying parallel usage of this API.
+      Pass * to indicate to update any version available. This might result in stale
+      updates."
     type: str
   transaction_id:
-    description: "An optional transaction ID can be passed to your request, which can be useful for
-      tracking calls through multiple services by using one identifier. The header key
-      must be set to Transaction-Id and the value is anything that you choose. If no
-      transaction ID is passed in, then a random ID is generated."
+    description: "An optional transaction id for the request."
     type: str
-  show_federated:
-    description: "If showI(federated is true, the group will return an is)federated value that is set
-      to true if rules exist for the group."
-    type: bool
-  force:
-    description: "If force is true, delete the group as well as its associated members and rules."
+  verbose:
+    description: "Returns resources access group template assigned, possible values C(true) or
+      C(false)."
     type: bool
   state:
     description:
@@ -74,71 +72,95 @@ notes:
 '''
 
 EXAMPLES = r'''
-- name: Create ibm_iam_access_group
-  ibm_iam_access_group:
-    account_id: 'testString'
-    name: 'Managers'
-    description: 'Group for managers'
+- name: Create ibm_iam_access_group_template_assignment
+  ibm_iam_access_group_template_assignment:
+    template_id: 'AccessGroupTemplateId-4be4'
+    template_version: '1'
+    target_type: 'AccountGroup'
+    target: '0a45594d0f-123'
     transaction_id: 'testString'
     state: present
 
-- name: Update ibm_iam_access_group
-  ibm_iam_access_group:
-    access_group_id: 'testString'
+- name: Update ibm_iam_access_group_template_assignment
+  ibm_iam_access_group_template_assignment:
+    assignment_id: 'testString'
     if_match: 'testString'
-    name: 'Awesome Managers'
-    description: 'Group for awesome managers.'
-    transaction_id: 'testString'
+    template_version: '1'
     state: present
 
-- name: Delete ibm_iam_access_group
-  ibm_iam_access_group:
-    access_group_id: 'testString'
+- name: Delete ibm_iam_access_group_template_assignment
+  ibm_iam_access_group_template_assignment:
+    assignment_id: 'testString'
     transaction_id: 'testString'
-    force: False
     state: absent
 '''
 
 RETURN = r'''
 id:
-  description: "The group's access group ID."
+  description: "The ID of the assignment."
   type: str
   returned: on success for create, update, delete operations
-name:
-  description: "The group's name."
-  type: str
-  returned: on success for create, update operations
-description:
-  description: "The group's description - if defined."
-  type: str
-  returned: on success for create, update operations
 account_id:
-  description: "The account id where the group was created."
+  description: "The ID of the account that the assignment belongs to."
+  type: str
+  returned: on success for create, update operations
+template_id:
+  description: "The ID of the template that the assignment is based on."
+  type: str
+  returned: on success for create, update operations
+template_version:
+  description: "The version of the template that the assignment is based on."
+  type: str
+  returned: on success for create, update operations
+target_type:
+  description: "The type of the entity that the assignment applies to."
+  type: str
+  choices:
+    - "Account"
+    - "AccountGroup"
+  returned: on success for create, update operations
+target:
+  description: "The ID of the entity that the assignment applies to."
+  type: str
+  returned: on success for create, update operations
+operation:
+  description: "The operation that the assignment applies to (e.g. 'assign', 'update', 'remove')."
+  type: str
+  choices:
+    - "assign"
+    - "update"
+    - "remove"
+  returned: on success for create, update operations
+iam_access_group_template_assignment_status:
+  description: "The status of the assignment (e.g. 'accepted', 'in_progress', 'succeeded', 'failed',
+    'superseded')."
+  type: str
+  choices:
+    - "accepted"
+    - "in_progress"
+    - "succeeded"
+    - "failed"
+    - "superseded"
+  returned: on success for create, update operations
+href:
+  description: "The URL of the assignment resource."
   type: str
   returned: on success for create, update operations
 created_at:
-  description: "The timestamp of when the group was created."
+  description: "The date and time when the assignment was created."
   type: str
   returned: on success for create, update operations
 created_by_id:
-  description: "The C(iam_id) of the entity that created the group."
+  description: "The user or system that created the assignment."
   type: str
   returned: on success for create, update operations
 last_modified_at:
-  description: "The timestamp of when the group was last edited."
+  description: "The date and time when the assignment was last updated."
   type: str
   returned: on success for create, update operations
 last_modified_by_id:
-  description: "The C(iam_id) of the entity that last modified the group name or description."
+  description: "The user or system that last updated the assignment."
   type: str
-  returned: on success for create, update operations
-href:
-  description: "A url to the given group resource."
-  type: str
-  returned: on success for create, update operations
-is_federated:
-  description: "This is set to true if rules exist for the group."
-  type: bool
   returned: on success for create, update operations
 status:
   description: The result status of the deletion
@@ -148,10 +170,6 @@ msg:
   description: an error message that describes what went wrong
   type: str
   returned: on error
-etag:
-  description: The ETag value associated with the C(Group)
-  returned: on create
-  type: str
 '''
 
 
@@ -169,16 +187,23 @@ else:
 
 def run_module():
     module_args = dict(
-        name=dict(
+        template_version=dict(
             type='str',
             required=False),
-        description=dict(
+        target_type=dict(
+            type='str',
+            choices=[
+                'Account',
+                'AccountGroup',
+            ],
+            required=False),
+        template_id=dict(
             type='str',
             required=False),
-        access_group_id=dict(
+        target=dict(
             type='str',
             required=False),
-        account_id=dict(
+        assignment_id=dict(
             type='str',
             required=False),
         if_match=dict(
@@ -187,10 +212,7 @@ def run_module():
         transaction_id=dict(
             type='str',
             required=False),
-        show_federated=dict(
-            type='bool',
-            required=False),
-        force=dict(
+        verbose=dict(
             type='bool',
             required=False),
         state=dict(
@@ -208,14 +230,14 @@ def run_module():
     if MISSING_IMPORT_EXC is not None:
         module.fail_json(msg='Missing required import: ' + MISSING_IMPORT_EXC.msg)
 
-    name = module.params["name"]
-    description = module.params["description"]
-    access_group_id = module.params["access_group_id"]
-    account_id = module.params["account_id"]
+    template_version = module.params["template_version"]
+    target_type = module.params["target_type"]
+    template_id = module.params["template_id"]
+    target = module.params["target"]
+    assignment_id = module.params["assignment_id"]
     if_match = module.params["if_match"]
     transaction_id = module.params["transaction_id"]
-    show_federated = module.params["show_federated"]
-    force = module.params["force"]
+    verbose = module.params["verbose"]
     state = module.params["state"]
 
     authenticator = get_authenticator(service_name='iam_access_groups')
@@ -231,12 +253,12 @@ def run_module():
     resource_exists = True
 
     # Check for existence
-    if access_group_id:
+    if assignment_id:
         try:
-            sdk.get_access_group(
-                access_group_id=access_group_id,
+            sdk.get_assignment(
+                assignment_id=assignment_id,
                 transaction_id=transaction_id,
-                show_federated=show_federated,
+                verbose=verbose,
             )
         except ApiException as ex:
             if ex.code == 404:
@@ -251,49 +273,52 @@ def run_module():
     if state == "absent":
         if resource_exists:
             try:
-                sdk.delete_access_group(
-                    access_group_id=access_group_id,
+                sdk.delete_assignment(
+                    assignment_id=assignment_id,
                     transaction_id=transaction_id,
-                    force=force,
                 )
             except ApiException as ex:
                 module.fail_json(msg=ex.message)
             else:
-                module.exit_json(changed=True, id=access_group_id, status="deleted")
+                module.exit_json(changed=True, id=assignment_id, status="deleted")
         else:
-            module.exit_json(changed=False, id=access_group_id, status="not_found")
+            module.exit_json(changed=False, id=assignment_id, status="not_found")
 
     if state == "present":
         if not resource_exists:
             # Create path
             try:
-                response = sdk.create_access_group(
-                    account_id=account_id,
-                    name=name,
-                    description=description,
+                response = sdk.create_assignment(
+                    template_id=template_id,
+                    template_version=template_version,
+                    target_type=target_type,
+                    target=target,
                     transaction_id=transaction_id,
                 )
             except ApiException as ex:
                 module.fail_json(msg=ex.message)
             else:
                 result = response.get_result()
-                etag = response.get_headers().get('ETag')
+                if 'status' in result:
+                    result['iam_access_group_template_assignment_status'] = result['status']
+                    del result['status']
 
-                module.exit_json(changed=True, etag=etag, **result)
+                module.exit_json(changed=True, **result)
         else:
             # Update path
             try:
-                response = sdk.update_access_group(
-                    access_group_id=access_group_id,
+                response = sdk.update_assignment(
+                    assignment_id=assignment_id,
                     if_match=if_match,
-                    name=name,
-                    description=description,
-                    transaction_id=transaction_id,
+                    template_version=template_version,
                 )
             except ApiException as ex:
                 module.fail_json(msg=ex.message)
             else:
                 result = response.get_result()
+                if 'status' in result:
+                    result['iam_access_group_template_assignment_status'] = result['status']
+                    del result['status']
 
                 module.exit_json(changed=True, **result)
 

@@ -9,7 +9,7 @@ import os
 
 from ansible_collections.community.internal_test_tools.tests.unit.compat.mock import patch
 from ansible_collections.community.internal_test_tools.tests.unit.plugins.modules.utils import ModuleTestCase, AnsibleFailJson, AnsibleExitJson, set_module_args
-from plugins.modules import ibm_iam_access_group_rule
+from plugins.modules import ibm_iam_access_group_template_assignment
 
 try:
     from .common import DetailedResponseMock
@@ -78,16 +78,16 @@ def mock_operations(func):
     def wrapper(self):
         # Make sure the imports are correct in both test and module packages.
         self.assertIsNone(MISSING_IMPORT_EXC)
-        self.assertIsNone(ibm_iam_access_group_rule.MISSING_IMPORT_EXC)
+        self.assertIsNone(ibm_iam_access_group_template_assignment.MISSING_IMPORT_EXC)
 
         # Set-up mocks for each operation.
-        self.read_patcher = patch('plugins.modules.ibm_iam_access_group_rule.IamAccessGroupsV2.get_access_group_rule')
+        self.read_patcher = patch('plugins.modules.ibm_iam_access_group_template_assignment.IamAccessGroupsV2.get_assignment')
         self.read_mock = self.read_patcher.start()
-        self.create_patcher = patch('plugins.modules.ibm_iam_access_group_rule.IamAccessGroupsV2.add_access_group_rule')
+        self.create_patcher = patch('plugins.modules.ibm_iam_access_group_template_assignment.IamAccessGroupsV2.create_assignment')
         self.create_mock = self.create_patcher.start()
-        self.update_patcher = patch('plugins.modules.ibm_iam_access_group_rule.IamAccessGroupsV2.replace_access_group_rule')
+        self.update_patcher = patch('plugins.modules.ibm_iam_access_group_template_assignment.IamAccessGroupsV2.update_assignment')
         self.update_mock = self.update_patcher.start()
-        self.delete_patcher = patch('plugins.modules.ibm_iam_access_group_rule.IamAccessGroupsV2.remove_access_group_rule')
+        self.delete_patcher = patch('plugins.modules.ibm_iam_access_group_template_assignment.IamAccessGroupsV2.delete_assignment')
         self.delete_mock = self.delete_patcher.start()
 
         # Run the actual function.
@@ -102,86 +102,72 @@ def mock_operations(func):
     return wrapper
 
 
-class TestRuleModule(ModuleTestCase):
+class TestTemplateAssignmentResponseModule(ModuleTestCase):
     """
-    Test class for Rule module testing.
+    Test class for TemplateAssignmentResponse module testing.
     """
 
     @mock_operations
-    def test_read_ibm_iam_access_group_rule_failed(self):
+    def test_read_ibm_iam_access_group_template_assignment_failed(self):
         """Test the inner "read" path in this module with a server error response."""
         self.read_mock.side_effect = ApiException(500, message='Something went wrong...')
 
         set_module_args({
-            'access_group_id': 'testString',
-            'rule_id': 'testString',
+            'assignment_id': 'testString',
             'transaction_id': 'testString',
+            'verbose': False,
         })
 
         with self.assertRaises(AnsibleFailJson) as result:
             os.environ['IAM_ACCESS_GROUPS_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_access_group_rule.main()
+            ibm_iam_access_group_template_assignment.main()
 
         self.assertEqual(result.exception.args[0]['msg'], 'Something went wrong...')
 
         mock_data = dict(
-            access_group_id='testString',
-            rule_id='testString',
+            assignment_id='testString',
             transaction_id='testString',
+            verbose=False,
         )
 
         self.read_mock.assert_called_once()
         self.assertTrue(checkResult(mock_data, self.read_mock.call_args.kwargs))
 
     @mock_operations
-    def test_create_ibm_iam_access_group_rule_success(self):
+    def test_create_ibm_iam_access_group_template_assignment_success(self):
         """Test the "create" path - successful."""
-        rule_conditions_model = {
-            'claim': 'isManager',
-            'operator': 'EQUALS',
-            'value': 'true',
-        }
-
         resource = {
-            'access_group_id': 'testString',
-            'expiration': 12,
-            'realm_name': 'https://idp.example.org/SAML2',
-            'conditions': [rule_conditions_model],
-            'name': 'Manager group rule',
+            'template_id': 'AccessGroupTemplateId-4be4',
+            'template_version': '1',
+            'target_type': 'AccountGroup',
+            'target': '0a45594d0f-123',
             'transaction_id': 'testString',
         }
 
-        headers = {
-            'ETag': 'my-etag-value'
-        }
-
         self.read_mock.side_effect = ApiException(404)
-        self.create_mock.return_value = DetailedResponseMock(resource, headers)
+        self.create_mock.return_value = DetailedResponseMock(resource)
 
         set_module_args({
-            'access_group_id': 'testString',
-            'expiration': 12,
-            'realm_name': 'https://idp.example.org/SAML2',
-            'conditions': [rule_conditions_model],
-            'name': 'Manager group rule',
+            'template_id': 'AccessGroupTemplateId-4be4',
+            'template_version': '1',
+            'target_type': 'AccountGroup',
+            'target': '0a45594d0f-123',
             'transaction_id': 'testString',
         })
 
         with self.assertRaises(AnsibleExitJson) as result:
             os.environ['IAM_ACCESS_GROUPS_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_access_group_rule.main()
+            ibm_iam_access_group_template_assignment.main()
 
         self.assertTrue(result.exception.args[0]['changed'])
-        self.assertEqual(result.exception.args[0]['etag'], 'my-etag-value')
         for field, value in resource.items():
             self.assertEqual(value, result.exception.args[0].get(field))
 
         mock_data = dict(
-            access_group_id='testString',
-            expiration=12,
-            realm_name='https://idp.example.org/SAML2',
-            conditions=[rule_conditions_model],
-            name='Manager group rule',
+            template_id='AccessGroupTemplateId-4be4',
+            template_version='1',
+            target_type='AccountGroup',
+            target='0a45594d0f-123',
             transaction_id='testString',
         )
 
@@ -189,38 +175,30 @@ class TestRuleModule(ModuleTestCase):
         self.assertTrue(checkResult(mock_data, self.create_mock.call_args.kwargs))
 
     @mock_operations
-    def test_create_ibm_iam_access_group_rule_failed(self):
+    def test_create_ibm_iam_access_group_template_assignment_failed(self):
         """Test the "create" path - failed."""
         self.read_mock.side_effect = ApiException(404)
-        self.create_mock.side_effect = ApiException(400, message='Create ibm_iam_access_group_rule error')
-
-        rule_conditions_model = {
-            'claim': 'isManager',
-            'operator': 'EQUALS',
-            'value': 'true',
-        }
+        self.create_mock.side_effect = ApiException(400, message='Create ibm_iam_access_group_template_assignment error')
 
         set_module_args({
-            'access_group_id': 'testString',
-            'expiration': 12,
-            'realm_name': 'https://idp.example.org/SAML2',
-            'conditions': [rule_conditions_model],
-            'name': 'Manager group rule',
+            'template_id': 'AccessGroupTemplateId-4be4',
+            'template_version': '1',
+            'target_type': 'AccountGroup',
+            'target': '0a45594d0f-123',
             'transaction_id': 'testString',
         })
 
         with self.assertRaises(AnsibleFailJson) as result:
             os.environ['IAM_ACCESS_GROUPS_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_access_group_rule.main()
+            ibm_iam_access_group_template_assignment.main()
 
-        self.assertEqual(result.exception.args[0]['msg'], 'Create ibm_iam_access_group_rule error')
+        self.assertEqual(result.exception.args[0]['msg'], 'Create ibm_iam_access_group_template_assignment error')
 
         mock_data = dict(
-            access_group_id='testString',
-            expiration=12,
-            realm_name='https://idp.example.org/SAML2',
-            conditions=[rule_conditions_model],
-            name='Manager group rule',
+            template_id='AccessGroupTemplateId-4be4',
+            template_version='1',
+            target_type='AccountGroup',
+            target='0a45594d0f-123',
             transaction_id='testString',
         )
 
@@ -228,70 +206,44 @@ class TestRuleModule(ModuleTestCase):
         self.assertTrue(checkResult(mock_data, self.create_mock.call_args.kwargs))
 
     @mock_operations
-    def test_update_ibm_iam_access_group_rule_success(self):
+    def test_update_ibm_iam_access_group_template_assignment_success(self):
         """Test the "update" path - successful."""
-        rule_conditions_model = {
-            'claim': 'isManager',
-            'operator': 'EQUALS',
-            'value': 'true',
-        }
-
         resource = {
-            'access_group_id': 'testString',
-            'rule_id': 'testString',
+            'assignment_id': 'testString',
             'if_match': 'testString',
-            'expiration': 12,
-            'realm_name': 'https://idp.example.org/SAML2',
-            'conditions': [rule_conditions_model],
-            'name': 'Manager group rule',
-            'transaction_id': 'testString',
-        }
-
-        headers = {
-            'ETag': 'my-etag-value'
+            'template_version': '1',
         }
 
         self.read_mock.return_value = DetailedResponseMock(resource)
-        self.update_mock.return_value = DetailedResponseMock(resource, headers)
+        self.update_mock.return_value = DetailedResponseMock(resource)
 
         set_module_args({
-            'access_group_id': 'testString',
-            'rule_id': 'testString',
+            'assignment_id': 'testString',
             'if_match': 'testString',
-            'expiration': 12,
-            'realm_name': 'https://idp.example.org/SAML2',
-            'conditions': [rule_conditions_model],
-            'name': 'Manager group rule',
-            'transaction_id': 'testString',
+            'template_version': '1',
         })
 
         with self.assertRaises(AnsibleExitJson) as result:
             os.environ['IAM_ACCESS_GROUPS_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_access_group_rule.main()
+            ibm_iam_access_group_template_assignment.main()
 
         self.assertTrue(result.exception.args[0]['changed'])
-        self.assertEqual(result.exception.args[0]['etag'], 'my-etag-value')
         for field, value in resource.items():
             self.assertEqual(value, result.exception.args[0].get(field))
 
         mock_data = dict(
-            access_group_id='testString',
-            rule_id='testString',
+            assignment_id='testString',
             if_match='testString',
-            expiration=12,
-            realm_name='https://idp.example.org/SAML2',
-            conditions=[rule_conditions_model],
-            name='Manager group rule',
-            transaction_id='testString',
+            template_version='1',
         )
 
         self.update_mock.assert_called_once()
         self.assertTrue(checkResult(mock_data, self.update_mock.call_args.kwargs))
 
         read_mock_data = dict(
-            access_group_id='testString',
-            rule_id='testString',
+            assignment_id='testString',
             transaction_id='testString',
+            verbose=False,
         )
         # Set the variables that belong to the "read" path to `None`
         # because we test the "update" path here.
@@ -302,63 +254,42 @@ class TestRuleModule(ModuleTestCase):
         self.assertTrue(checkResult(read_mock_data, self.read_mock.call_args.kwargs))
 
     @mock_operations
-    def test_update_ibm_iam_access_group_rule_failed(self):
+    def test_update_ibm_iam_access_group_template_assignment_failed(self):
         """Test the "update" path - failed."""
-        rule_conditions_model = {
-            'claim': 'isManager',
-            'operator': 'EQUALS',
-            'value': 'true',
-        }
-
         resource = {
-            'access_group_id': 'testString',
-            'rule_id': 'testString',
+            'assignment_id': 'testString',
             'if_match': 'testString',
-            'expiration': 12,
-            'realm_name': 'https://idp.example.org/SAML2',
-            'conditions': [rule_conditions_model],
-            'name': 'Manager group rule',
-            'transaction_id': 'testString',
+            'template_version': '1',
         }
 
         self.read_mock.return_value = DetailedResponseMock(resource)
-        self.update_mock.side_effect = ApiException(400, message='Update ibm_iam_access_group_rule error')
+        self.update_mock.side_effect = ApiException(400, message='Update ibm_iam_access_group_template_assignment error')
 
         set_module_args({
-            'access_group_id': 'testString',
-            'rule_id': 'testString',
+            'assignment_id': 'testString',
             'if_match': 'testString',
-            'expiration': 12,
-            'realm_name': 'https://idp.example.org/SAML2',
-            'conditions': [rule_conditions_model],
-            'name': 'Manager group rule',
-            'transaction_id': 'testString',
+            'template_version': '1',
         })
 
         with self.assertRaises(AnsibleFailJson) as result:
             os.environ['IAM_ACCESS_GROUPS_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_access_group_rule.main()
+            ibm_iam_access_group_template_assignment.main()
 
-        self.assertEqual(result.exception.args[0]['msg'], 'Update ibm_iam_access_group_rule error')
+        self.assertEqual(result.exception.args[0]['msg'], 'Update ibm_iam_access_group_template_assignment error')
 
         mock_data = dict(
-            access_group_id='testString',
-            rule_id='testString',
+            assignment_id='testString',
             if_match='testString',
-            expiration=12,
-            realm_name='https://idp.example.org/SAML2',
-            conditions=[rule_conditions_model],
-            name='Manager group rule',
-            transaction_id='testString',
+            template_version='1',
         )
 
         self.update_mock.assert_called_once()
         self.assertTrue(checkResult(mock_data, self.update_mock.call_args.kwargs))
 
         read_mock_data = dict(
-            access_group_id='testString',
-            rule_id='testString',
+            assignment_id='testString',
             transaction_id='testString',
+            verbose=False,
         )
         # Set the variables that belong to the "read" path to `None`
         # because we test the "update" path here.
@@ -369,14 +300,13 @@ class TestRuleModule(ModuleTestCase):
         self.assertTrue(checkResult(read_mock_data, self.read_mock.call_args.kwargs))
 
     @mock_operations
-    def test_delete_ibm_iam_access_group_rule_success(self):
+    def test_delete_ibm_iam_access_group_template_assignment_success(self):
         """Test the "delete" path - successfull."""
         self.read_mock.return_value = DetailedResponseMock()
         self.delete_mock.return_value = DetailedResponseMock()
 
         args = {
-            'access_group_id': 'testString',
-            'rule_id': 'testString',
+            'assignment_id': 'testString',
             'transaction_id': 'testString',
             'state': 'absent',
         }
@@ -385,15 +315,14 @@ class TestRuleModule(ModuleTestCase):
 
         with self.assertRaises(AnsibleExitJson) as result:
             os.environ['IAM_ACCESS_GROUPS_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_access_group_rule.main()
+            ibm_iam_access_group_template_assignment.main()
 
         self.assertTrue(result.exception.args[0]['changed'])
         self.assertEqual(result.exception.args[0]['id'], 'testString')
         self.assertEqual(result.exception.args[0]['status'], 'deleted')
 
         mock_data = dict(
-            access_group_id='testString',
-            rule_id='testString',
+            assignment_id='testString',
             transaction_id='testString',
         )
 
@@ -401,9 +330,9 @@ class TestRuleModule(ModuleTestCase):
         self.assertTrue(checkResult(mock_data, self.delete_mock.call_args.kwargs))
 
         read_mock_data = dict(
-            access_group_id='testString',
-            rule_id='testString',
+            assignment_id='testString',
             transaction_id='testString',
+            verbose=False,
         )
         # Set the variables that belong to the "read" path to `None`
         # because we test the "delete" path here.
@@ -414,14 +343,13 @@ class TestRuleModule(ModuleTestCase):
         self.assertTrue(checkResult(read_mock_data, self.read_mock.call_args.kwargs))
 
     @mock_operations
-    def test_delete_ibm_iam_access_group_rule_not_exists(self):
+    def test_delete_ibm_iam_access_group_template_assignment_not_exists(self):
         """Test the "delete" path - not exists."""
         self.read_mock.side_effect = ApiException(404)
         self.delete_mock.return_value = DetailedResponseMock()
 
         args = {
-            'access_group_id': 'testString',
-            'rule_id': 'testString',
+            'assignment_id': 'testString',
             'transaction_id': 'testString',
             'state': 'absent',
         }
@@ -430,24 +358,23 @@ class TestRuleModule(ModuleTestCase):
 
         with self.assertRaises(AnsibleExitJson) as result:
             os.environ['IAM_ACCESS_GROUPS_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_access_group_rule.main()
+            ibm_iam_access_group_template_assignment.main()
 
         self.assertFalse(result.exception.args[0]['changed'])
         self.assertEqual(result.exception.args[0]['id'], 'testString')
         self.assertEqual(result.exception.args[0]['status'], 'not_found')
 
         mock_data = dict(
-            access_group_id='testString',
-            rule_id='testString',
+            assignment_id='testString',
             transaction_id='testString',
         )
 
         self.delete_mock.assert_not_called()
 
         read_mock_data = dict(
-            access_group_id='testString',
-            rule_id='testString',
+            assignment_id='testString',
             transaction_id='testString',
+            verbose=False,
         )
         # Set the variables that belong to the "read" path to `None`
         # because we test the "delete" path here.
@@ -458,27 +385,25 @@ class TestRuleModule(ModuleTestCase):
         self.assertTrue(checkResult(read_mock_data, self.read_mock.call_args.kwargs))
 
     @mock_operations
-    def test_delete_ibm_iam_access_group_rule_failed(self):
+    def test_delete_ibm_iam_access_group_template_assignment_failed(self):
         """Test the "delete" path - failed."""
         self.read_mock.return_value = DetailedResponseMock()
-        self.delete_mock.side_effect = ApiException(400, message='Delete ibm_iam_access_group_rule error')
+        self.delete_mock.side_effect = ApiException(400, message='Delete ibm_iam_access_group_template_assignment error')
 
         set_module_args({
-            'access_group_id': 'testString',
-            'rule_id': 'testString',
+            'assignment_id': 'testString',
             'transaction_id': 'testString',
             'state': 'absent',
         })
 
         with self.assertRaises(AnsibleFailJson) as result:
             os.environ['IAM_ACCESS_GROUPS_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_access_group_rule.main()
+            ibm_iam_access_group_template_assignment.main()
 
-        self.assertEqual(result.exception.args[0]['msg'], 'Delete ibm_iam_access_group_rule error')
+        self.assertEqual(result.exception.args[0]['msg'], 'Delete ibm_iam_access_group_template_assignment error')
 
         mock_data = dict(
-            access_group_id='testString',
-            rule_id='testString',
+            assignment_id='testString',
             transaction_id='testString',
         )
 
@@ -486,9 +411,9 @@ class TestRuleModule(ModuleTestCase):
         self.assertTrue(checkResult(mock_data, self.delete_mock.call_args.kwargs))
 
         read_mock_data = dict(
-            access_group_id='testString',
-            rule_id='testString',
+            assignment_id='testString',
             transaction_id='testString',
+            verbose=False,
         )
         # Set the variables that belong to the "read" path to `None`
         # because we test the "delete" path here.

@@ -9,7 +9,7 @@ import os
 
 from ansible_collections.community.internal_test_tools.tests.unit.compat.mock import patch
 from ansible_collections.community.internal_test_tools.tests.unit.plugins.modules.utils import ModuleTestCase, AnsibleFailJson, AnsibleExitJson, set_module_args
-from plugins.modules import ibm_iam_access_groups_info
+from plugins.modules import ibm_iam_access_group_template_assignment_info
 
 try:
     from .common import DetailedResponseMock
@@ -24,12 +24,12 @@ def mock_operations(func):
     def wrapper(self):
         # Make sure the imports are correct in both test and module packages.
         self.assertIsNone(MISSING_IMPORT_EXC)
-        self.assertIsNone(ibm_iam_access_groups_info.MISSING_IMPORT_EXC)
+        self.assertIsNone(ibm_iam_access_group_template_assignment_info.MISSING_IMPORT_EXC)
 
         # Set-up mocks for each operation.
-        self.read_patcher = patch('plugins.modules.ibm_iam_access_groups_info.IamAccessGroupsV2.get_access_group')
+        self.read_patcher = patch('plugins.modules.ibm_iam_access_group_template_assignment_info.IamAccessGroupsV2.get_assignment')
         self.read_mock = self.read_patcher.start()
-        self.list_patcher = patch('plugins.modules.ibm_iam_access_groups_info.AccessGroupsPager.get_all')
+        self.list_patcher = patch('plugins.modules.ibm_iam_access_group_template_assignment_info.IamAccessGroupsV2.list_assignments')
         self.list_mock = self.list_patcher.start()
 
         # Run the actual function.
@@ -42,18 +42,18 @@ def mock_operations(func):
     return wrapper
 
 
-class TestGroupsListModuleInfo(ModuleTestCase):
+class TestListTemplateAssignmentResponseModuleInfo(ModuleTestCase):
     """
-    Test class for GroupsList module testing.
+    Test class for ListTemplateAssignmentResponse module testing.
     """
 
     @mock_operations
-    def test_read_ibm_iam_access_groups_success(self):
+    def test_read_ibm_iam_access_group_template_assignment_success(self):
         """Test the "read" path - successful."""
         datasource = {
-            'access_group_id': 'testString',
+            'assignment_id': 'testString',
             'transaction_id': 'testString',
-            'show_federated': False,
+            'verbose': False,
         }
 
         headers = {
@@ -63,94 +63,92 @@ class TestGroupsListModuleInfo(ModuleTestCase):
         self.read_mock.return_value = DetailedResponseMock(datasource, headers)
 
         set_module_args({
-            'access_group_id': 'testString',
+            'assignment_id': 'testString',
             'transaction_id': 'testString',
-            'show_federated': False,
+            'verbose': False,
         })
 
         with self.assertRaises(AnsibleExitJson) as result:
             os.environ['IAM_ACCESS_GROUPS_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_access_groups_info.main()
+            ibm_iam_access_group_template_assignment_info.main()
 
         self.assertEqual(result.exception.args[0]['etag'], 'my-etag-value')
         for field, value in datasource.items():
             self.assertEqual(value, result.exception.args[0].get(field))
 
         self.read_mock.assert_called_once_with(
-            access_group_id='testString',
+            assignment_id='testString',
             transaction_id='testString',
-            show_federated=False,
+            verbose=False,
         )
 
     @mock_operations
-    def test_read_ibm_iam_access_groups_failed(self):
+    def test_read_ibm_iam_access_group_template_assignment_failed(self):
         """Test the "read" path - failed."""
-        self.read_mock.side_effect = ApiException(400, message='Read ibm_iam_access_groups error')
+        self.read_mock.side_effect = ApiException(400, message='Read ibm_iam_access_group_template_assignment error')
 
         set_module_args({
-            'access_group_id': 'testString',
+            'assignment_id': 'testString',
             'transaction_id': 'testString',
-            'show_federated': False,
+            'verbose': False,
         })
 
         with self.assertRaises(AnsibleFailJson) as result:
             os.environ['IAM_ACCESS_GROUPS_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_access_groups_info.main()
+            ibm_iam_access_group_template_assignment_info.main()
 
-        self.assertEqual(result.exception.args[0]['msg'], 'Read ibm_iam_access_groups error')
+        self.assertEqual(result.exception.args[0]['msg'], 'Read ibm_iam_access_group_template_assignment error')
 
         self.read_mock.assert_called_once_with(
-            access_group_id='testString',
+            assignment_id='testString',
             transaction_id='testString',
-            show_federated=False,
+            verbose=False,
         )
 
     @mock_operations
-    def test_list_ibm_iam_access_groups_success(self):
+    def test_list_ibm_iam_access_group_template_assignment_success(self):
         """Test the "list" path - successful."""
-        self.list_mock.return_value = []
+        self.list_mock.return_value = DetailedResponseMock(dict(resources=[]))
 
         set_module_args({
-            'account_id': 'testString',
+            'account_id': 'accountID-123',
+            'template_id': 'testString',
+            'template_version': 'testString',
+            'target': 'testString',
+            'status': 'accepted',
             'transaction_id': 'testString',
-            'iam_id': 'testString',
-            'search': 'testString',
-            'membership_type': 'static',
             'limit': 50,
-            'sort': 'name',
-            'show_federated': False,
-            'hide_public_access': False,
+            'offset': 0,
         })
 
         with self.assertRaises(AnsibleExitJson) as result:
             os.environ['IAM_ACCESS_GROUPS_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_access_groups_info.main()
+            ibm_iam_access_group_template_assignment_info.main()
 
-        self.assertEqual(result.exception.args[0].get("groups"), [])
+        self.assertEqual(result.exception.args[0].get("resources"), [])
 
         self.list_mock.assert_called_once()
 
     @mock_operations
-    def test_list_ibm_iam_access_groups_failed(self):
+    def test_list_ibm_iam_access_group_template_assignment_failed(self):
         """Test the "list" path - failed."""
-        self.list_mock.side_effect = ApiException(400, message='List ibm_iam_access_groups error')
+        self.list_mock.side_effect = ApiException(400, message='List ibm_iam_access_group_template_assignment error')
 
         set_module_args({
-            'account_id': 'testString',
+            'account_id': 'accountID-123',
+            'template_id': 'testString',
+            'template_version': 'testString',
+            'target': 'testString',
+            'status': 'accepted',
             'transaction_id': 'testString',
-            'iam_id': 'testString',
-            'search': 'testString',
-            'membership_type': 'static',
             'limit': 50,
-            'sort': 'name',
-            'show_federated': False,
-            'hide_public_access': False,
+            'offset': 0,
         })
 
         with self.assertRaises(AnsibleFailJson) as result:
             os.environ['IAM_ACCESS_GROUPS_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_access_groups_info.main()
+            ibm_iam_access_group_template_assignment_info.main()
 
-        self.assertEqual(result.exception.args[0]['msg'], 'List ibm_iam_access_groups error')
+        self.assertEqual(result.exception.args[0]['msg'], 'List ibm_iam_access_group_template_assignment error')
 
         self.list_mock.assert_called_once()
