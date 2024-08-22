@@ -13,7 +13,7 @@ DOCUMENTATION = r'''
 ---
 module: ibm_iam_api_key_operations_info
 short_description: Manage C(iam_api_key_operations) for IAM Identity Services.
-author: IBM SDK Generator (@ibm)
+author: Gannayak Pabra (@Gannayak0722)
 version_added: "1.0.0"
 description:
   - This module retrieves one or more C(iam_api_key_operations) for IAM Identity Services.

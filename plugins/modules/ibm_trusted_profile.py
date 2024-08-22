@@ -13,7 +13,7 @@ DOCUMENTATION = r'''
 ---
 module: ibm_trusted_profile
 short_description: Manage C(trusted_profiles) for IAM Identity Services.
-author: IBM SDK Generator (@ibm)
+author: Gannayak Pabra (@Gannayak0722)
 version_added: "1.0.0"
 description:
   - This module creates, updates, or deletes a C(trusted_profile) resource for IAM Identity Services.

@@ -13,7 +13,7 @@ DOCUMENTATION = r'''
 ---
 module: ibm_iam_service_id
 short_description: Manage C(iam_service_ids) for IAM Identity Services.
-author: IBM SDK Generator (@ibm)
+author: Gannayak Pabra (@Gannayak0722)
 version_added: "1.0.0"
 description:
   - This module creates, updates, or deletes an C(iam_service_id) resource for IAM Identity Services.

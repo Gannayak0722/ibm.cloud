@@ -13,7 +13,7 @@ DOCUMENTATION = r'''
 ---
 module: ibm_iam_profile_claim_rule_info
 short_description: Manage C(iam_profile_claim_rule) for IAM Identity Services.
-author: IBM SDK Generator (@ibm)
+author: Gannayak Pabra (@Gannayak0722)
 version_added: "1.0.0"
 description:
   - This module retrieves one or more C(iam_profile_claim_rule) for IAM Identity Services.
