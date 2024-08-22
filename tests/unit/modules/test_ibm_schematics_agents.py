@@ -9,7 +9,7 @@ import os
 
 from ansible_collections.community.internal_test_tools.tests.unit.compat.mock import patch
 from ansible_collections.community.internal_test_tools.tests.unit.plugins.modules.utils import ModuleTestCase, AnsibleFailJson, AnsibleExitJson, set_module_args
-from plugins.modules import ibm_schematics_inventory
+from plugins.modules import ibm_schematics_agents
 
 try:
     from .common import DetailedResponseMock
@@ -78,16 +78,16 @@ def mock_operations(func):
     def wrapper(self):
         # Make sure the imports are correct in both test and module packages.
         self.assertIsNone(MISSING_IMPORT_EXC)
-        self.assertIsNone(ibm_schematics_inventory.MISSING_IMPORT_EXC)
+        self.assertIsNone(ibm_schematics_agents.MISSING_IMPORT_EXC)
 
         # Set-up mocks for each operation.
-        self.read_patcher = patch('plugins.modules.ibm_schematics_inventory.SchematicsV1.get_inventory')
+        self.read_patcher = patch('plugins.modules.ibm_schematics_agents.SchematicsV1.get_agent')
         self.read_mock = self.read_patcher.start()
-        self.create_patcher = patch('plugins.modules.ibm_schematics_inventory.SchematicsV1.create_inventory')
+        self.create_patcher = patch('plugins.modules.ibm_schematics_agents.SchematicsV1.register_agent')
         self.create_mock = self.create_patcher.start()
-        self.update_patcher = patch('plugins.modules.ibm_schematics_inventory.SchematicsV1.replace_inventory')
+        self.update_patcher = patch('plugins.modules.ibm_schematics_agents.SchematicsV1.update_agent_registration')
         self.update_mock = self.update_patcher.start()
-        self.delete_patcher = patch('plugins.modules.ibm_schematics_inventory.SchematicsV1.delete_inventory')
+        self.delete_patcher = patch('plugins.modules.ibm_schematics_agents.SchematicsV1.delete_agent')
         self.delete_mock = self.delete_patcher.start()
 
         # Run the actual function.
@@ -102,29 +102,29 @@ def mock_operations(func):
     return wrapper
 
 
-class TestInventoryResourceRecordModule(ModuleTestCase):
+class TestAgentModule(ModuleTestCase):
     """
-    Test class for InventoryResourceRecord module testing.
+    Test class for Agent module testing.
     """
 
     @mock_operations
-    def test_read_ibm_schematics_inventory_failed(self):
+    def test_read_ibm_schematics_agents_failed(self):
         """Test the inner "read" path in this module with a server error response."""
         self.read_mock.side_effect = ApiException(500, message='Something went wrong...')
 
         set_module_args({
-            'inventory_id': 'testString',
+            'agent_id': 'testString',
             'profile': 'summary',
         })
 
         with self.assertRaises(AnsibleFailJson) as result:
             os.environ['SCHEMATICS_AUTH_TYPE'] = 'noAuth'
-            ibm_schematics_inventory.main()
+            ibm_schematics_agents.main()
 
         self.assertEqual(result.exception.args[0]['msg'], 'Something went wrong...')
 
         mock_data = dict(
-            inventory_id='testString',
+            agent_id='testString',
             profile='summary',
         )
 
@@ -132,131 +132,159 @@ class TestInventoryResourceRecordModule(ModuleTestCase):
         self.assertTrue(checkResult(mock_data, self.read_mock.call_args.kwargs))
 
     @mock_operations
-    def test_create_ibm_schematics_inventory_success(self):
+    def test_create_ibm_schematics_agents_success(self):
         """Test the "create" path - successful."""
+        agent_user_state_model = {
+            'state': 'enable',
+        }
+
         resource = {
-            'name': 'testString',
-            'description': 'testString',
+            'name': 'MyDevAgent',
+            'agent_location': 'us-south',
             'location': 'us-south',
+            'profile_id': 'testString',
+            'description': 'Register agent',
             'resource_group': 'testString',
-            'inventories_ini': 'testString',
-            'resource_queries': ['testString'],
+            'tags': ['testString'],
+            'user_state': agent_user_state_model,
         }
 
         self.read_mock.side_effect = ApiException(404)
         self.create_mock.return_value = DetailedResponseMock(resource)
 
         set_module_args({
-            'name': 'testString',
-            'description': 'testString',
+            'name': 'MyDevAgent',
+            'agent_location': 'us-south',
             'location': 'us-south',
+            'profile_id': 'testString',
+            'description': 'Register agent',
             'resource_group': 'testString',
-            'inventories_ini': 'testString',
-            'resource_queries': ['testString'],
+            'tags': ['testString'],
+            'user_state': agent_user_state_model,
         })
 
         with self.assertRaises(AnsibleExitJson) as result:
             os.environ['SCHEMATICS_AUTH_TYPE'] = 'noAuth'
-            ibm_schematics_inventory.main()
+            ibm_schematics_agents.main()
 
         self.assertTrue(result.exception.args[0]['changed'])
         for field, value in resource.items():
             self.assertEqual(value, result.exception.args[0].get(field))
 
         mock_data = dict(
-            name='testString',
-            description='testString',
+            name='MyDevAgent',
+            agent_location='us-south',
             location='us-south',
+            profile_id='testString',
+            description='Register agent',
             resource_group='testString',
-            inventories_ini='testString',
-            resource_queries=['testString'],
+            tags=['testString'],
+            user_state=agent_user_state_model,
         )
 
         self.create_mock.assert_called_once()
         self.assertTrue(checkResult(mock_data, self.create_mock.call_args.kwargs))
 
     @mock_operations
-    def test_create_ibm_schematics_inventory_failed(self):
+    def test_create_ibm_schematics_agents_failed(self):
         """Test the "create" path - failed."""
         self.read_mock.side_effect = ApiException(404)
-        self.create_mock.side_effect = ApiException(400, message='Create ibm_schematics_inventory error')
+        self.create_mock.side_effect = ApiException(400, message='Create ibm_schematics_agents error')
+
+        agent_user_state_model = {
+            'state': 'enable',
+        }
 
         set_module_args({
-            'name': 'testString',
-            'description': 'testString',
+            'name': 'MyDevAgent',
+            'agent_location': 'us-south',
             'location': 'us-south',
+            'profile_id': 'testString',
+            'description': 'Register agent',
             'resource_group': 'testString',
-            'inventories_ini': 'testString',
-            'resource_queries': ['testString'],
+            'tags': ['testString'],
+            'user_state': agent_user_state_model,
         })
 
         with self.assertRaises(AnsibleFailJson) as result:
             os.environ['SCHEMATICS_AUTH_TYPE'] = 'noAuth'
-            ibm_schematics_inventory.main()
+            ibm_schematics_agents.main()
 
-        self.assertEqual(result.exception.args[0]['msg'], 'Create ibm_schematics_inventory error')
+        self.assertEqual(result.exception.args[0]['msg'], 'Create ibm_schematics_agents error')
 
         mock_data = dict(
-            name='testString',
-            description='testString',
+            name='MyDevAgent',
+            agent_location='us-south',
             location='us-south',
+            profile_id='testString',
+            description='Register agent',
             resource_group='testString',
-            inventories_ini='testString',
-            resource_queries=['testString'],
+            tags=['testString'],
+            user_state=agent_user_state_model,
         )
 
         self.create_mock.assert_called_once()
         self.assertTrue(checkResult(mock_data, self.create_mock.call_args.kwargs))
 
     @mock_operations
-    def test_update_ibm_schematics_inventory_success(self):
+    def test_update_ibm_schematics_agents_success(self):
         """Test the "update" path - successful."""
+        agent_user_state_model = {
+            'state': 'enable',
+        }
+
         resource = {
-            'inventory_id': 'testString',
-            'name': 'testString',
-            'description': 'testString',
+            'agent_id': 'testString',
+            'name': 'MyDevAgent',
+            'agent_location': 'us-south',
             'location': 'us-south',
+            'profile_id': 'testString',
+            'description': 'Register agent',
             'resource_group': 'testString',
-            'inventories_ini': 'testString',
-            'resource_queries': ['testString'],
+            'tags': ['testString'],
+            'user_state': agent_user_state_model,
         }
 
         self.read_mock.return_value = DetailedResponseMock(resource)
         self.update_mock.return_value = DetailedResponseMock(resource)
 
         set_module_args({
-            'inventory_id': 'testString',
-            'name': 'testString',
-            'description': 'testString',
+            'agent_id': 'testString',
+            'name': 'MyDevAgent',
+            'agent_location': 'us-south',
             'location': 'us-south',
+            'profile_id': 'testString',
+            'description': 'Register agent',
             'resource_group': 'testString',
-            'inventories_ini': 'testString',
-            'resource_queries': ['testString'],
+            'tags': ['testString'],
+            'user_state': agent_user_state_model,
         })
 
         with self.assertRaises(AnsibleExitJson) as result:
             os.environ['SCHEMATICS_AUTH_TYPE'] = 'noAuth'
-            ibm_schematics_inventory.main()
+            ibm_schematics_agents.main()
 
         self.assertTrue(result.exception.args[0]['changed'])
         for field, value in resource.items():
             self.assertEqual(value, result.exception.args[0].get(field))
 
         mock_data = dict(
-            inventory_id='testString',
-            name='testString',
-            description='testString',
+            agent_id='testString',
+            name='MyDevAgent',
+            agent_location='us-south',
             location='us-south',
+            profile_id='testString',
+            description='Register agent',
             resource_group='testString',
-            inventories_ini='testString',
-            resource_queries=['testString'],
+            tags=['testString'],
+            user_state=agent_user_state_model,
         )
 
         self.update_mock.assert_called_once()
         self.assertTrue(checkResult(mock_data, self.update_mock.call_args.kwargs))
 
         read_mock_data = dict(
-            inventory_id='testString',
+            agent_id='testString',
             profile='summary',
         )
         # Set the variables that belong to the "read" path to `None`
@@ -268,52 +296,62 @@ class TestInventoryResourceRecordModule(ModuleTestCase):
         self.assertTrue(checkResult(read_mock_data, self.read_mock.call_args.kwargs))
 
     @mock_operations
-    def test_update_ibm_schematics_inventory_failed(self):
+    def test_update_ibm_schematics_agents_failed(self):
         """Test the "update" path - failed."""
+        agent_user_state_model = {
+            'state': 'enable',
+        }
+
         resource = {
-            'inventory_id': 'testString',
-            'name': 'testString',
-            'description': 'testString',
+            'agent_id': 'testString',
+            'name': 'MyDevAgent',
+            'agent_location': 'us-south',
             'location': 'us-south',
+            'profile_id': 'testString',
+            'description': 'Register agent',
             'resource_group': 'testString',
-            'inventories_ini': 'testString',
-            'resource_queries': ['testString'],
+            'tags': ['testString'],
+            'user_state': agent_user_state_model,
         }
 
         self.read_mock.return_value = DetailedResponseMock(resource)
-        self.update_mock.side_effect = ApiException(400, message='Update ibm_schematics_inventory error')
+        self.update_mock.side_effect = ApiException(400, message='Update ibm_schematics_agents error')
 
         set_module_args({
-            'inventory_id': 'testString',
-            'name': 'testString',
-            'description': 'testString',
+            'agent_id': 'testString',
+            'name': 'MyDevAgent',
+            'agent_location': 'us-south',
             'location': 'us-south',
+            'profile_id': 'testString',
+            'description': 'Register agent',
             'resource_group': 'testString',
-            'inventories_ini': 'testString',
-            'resource_queries': ['testString'],
+            'tags': ['testString'],
+            'user_state': agent_user_state_model,
         })
 
         with self.assertRaises(AnsibleFailJson) as result:
             os.environ['SCHEMATICS_AUTH_TYPE'] = 'noAuth'
-            ibm_schematics_inventory.main()
+            ibm_schematics_agents.main()
 
-        self.assertEqual(result.exception.args[0]['msg'], 'Update ibm_schematics_inventory error')
+        self.assertEqual(result.exception.args[0]['msg'], 'Update ibm_schematics_agents error')
 
         mock_data = dict(
-            inventory_id='testString',
-            name='testString',
-            description='testString',
+            agent_id='testString',
+            name='MyDevAgent',
+            agent_location='us-south',
             location='us-south',
+            profile_id='testString',
+            description='Register agent',
             resource_group='testString',
-            inventories_ini='testString',
-            resource_queries=['testString'],
+            tags=['testString'],
+            user_state=agent_user_state_model,
         )
 
         self.update_mock.assert_called_once()
         self.assertTrue(checkResult(mock_data, self.update_mock.call_args.kwargs))
 
         read_mock_data = dict(
-            inventory_id='testString',
+            agent_id='testString',
             profile='summary',
         )
         # Set the variables that belong to the "read" path to `None`
@@ -325,15 +363,13 @@ class TestInventoryResourceRecordModule(ModuleTestCase):
         self.assertTrue(checkResult(read_mock_data, self.read_mock.call_args.kwargs))
 
     @mock_operations
-    def test_delete_ibm_schematics_inventory_success(self):
+    def test_delete_ibm_schematics_agents_success(self):
         """Test the "delete" path - successfull."""
         self.read_mock.return_value = DetailedResponseMock()
         self.delete_mock.return_value = DetailedResponseMock()
 
         args = {
-            'inventory_id': 'testString',
-            'force': True,
-            'propagate': True,
+            'agent_id': 'testString',
             'state': 'absent',
         }
 
@@ -341,23 +377,21 @@ class TestInventoryResourceRecordModule(ModuleTestCase):
 
         with self.assertRaises(AnsibleExitJson) as result:
             os.environ['SCHEMATICS_AUTH_TYPE'] = 'noAuth'
-            ibm_schematics_inventory.main()
+            ibm_schematics_agents.main()
 
         self.assertTrue(result.exception.args[0]['changed'])
         self.assertEqual(result.exception.args[0]['id'], 'testString')
         self.assertEqual(result.exception.args[0]['status'], 'deleted')
 
         mock_data = dict(
-            inventory_id='testString',
-            force=True,
-            propagate=True,
+            agent_id='testString',
         )
 
         self.delete_mock.assert_called_once()
         self.assertTrue(checkResult(mock_data, self.delete_mock.call_args.kwargs))
 
         read_mock_data = dict(
-            inventory_id='testString',
+            agent_id='testString',
             profile='summary',
         )
         # Set the variables that belong to the "read" path to `None`
@@ -369,15 +403,13 @@ class TestInventoryResourceRecordModule(ModuleTestCase):
         self.assertTrue(checkResult(read_mock_data, self.read_mock.call_args.kwargs))
 
     @mock_operations
-    def test_delete_ibm_schematics_inventory_not_exists(self):
+    def test_delete_ibm_schematics_agents_not_exists(self):
         """Test the "delete" path - not exists."""
         self.read_mock.side_effect = ApiException(404)
         self.delete_mock.return_value = DetailedResponseMock()
 
         args = {
-            'inventory_id': 'testString',
-            'force': True,
-            'propagate': True,
+            'agent_id': 'testString',
             'state': 'absent',
         }
 
@@ -385,22 +417,20 @@ class TestInventoryResourceRecordModule(ModuleTestCase):
 
         with self.assertRaises(AnsibleExitJson) as result:
             os.environ['SCHEMATICS_AUTH_TYPE'] = 'noAuth'
-            ibm_schematics_inventory.main()
+            ibm_schematics_agents.main()
 
         self.assertFalse(result.exception.args[0]['changed'])
         self.assertEqual(result.exception.args[0]['id'], 'testString')
         self.assertEqual(result.exception.args[0]['status'], 'not_found')
 
         mock_data = dict(
-            inventory_id='testString',
-            force=True,
-            propagate=True,
+            agent_id='testString',
         )
 
         self.delete_mock.assert_not_called()
 
         read_mock_data = dict(
-            inventory_id='testString',
+            agent_id='testString',
             profile='summary',
         )
         # Set the variables that belong to the "read" path to `None`
@@ -412,35 +442,31 @@ class TestInventoryResourceRecordModule(ModuleTestCase):
         self.assertTrue(checkResult(read_mock_data, self.read_mock.call_args.kwargs))
 
     @mock_operations
-    def test_delete_ibm_schematics_inventory_failed(self):
+    def test_delete_ibm_schematics_agents_failed(self):
         """Test the "delete" path - failed."""
         self.read_mock.return_value = DetailedResponseMock()
-        self.delete_mock.side_effect = ApiException(400, message='Delete ibm_schematics_inventory error')
+        self.delete_mock.side_effect = ApiException(400, message='Delete ibm_schematics_agents error')
 
         set_module_args({
-            'inventory_id': 'testString',
-            'force': True,
-            'propagate': True,
+            'agent_id': 'testString',
             'state': 'absent',
         })
 
         with self.assertRaises(AnsibleFailJson) as result:
             os.environ['SCHEMATICS_AUTH_TYPE'] = 'noAuth'
-            ibm_schematics_inventory.main()
+            ibm_schematics_agents.main()
 
-        self.assertEqual(result.exception.args[0]['msg'], 'Delete ibm_schematics_inventory error')
+        self.assertEqual(result.exception.args[0]['msg'], 'Delete ibm_schematics_agents error')
 
         mock_data = dict(
-            inventory_id='testString',
-            force=True,
-            propagate=True,
+            agent_id='testString',
         )
 
         self.delete_mock.assert_called_once()
         self.assertTrue(checkResult(mock_data, self.delete_mock.call_args.kwargs))
 
         read_mock_data = dict(
-            inventory_id='testString',
+            agent_id='testString',
             profile='summary',
         )
         # Set the variables that belong to the "read" path to `None`

@@ -11,34 +11,30 @@ __metaclass__ = type
 
 DOCUMENTATION = r'''
 ---
-module: ibm_schematics_inventory
-short_description: Manage C(schematics_inventorys) for Schematics Service API.
+module: ibm_schematics_agents
+short_description: Manage C(schematics_agentss) for Schematics Service API.
 author: Gannayak Pabra (@Gannayak0722)
 version_added: "1.0.0"
 description:
-  - This module creates, updates, or deletes a C(schematics_inventory) resource for Schematics Service API.
+  - This module creates, updates, or deletes a C(schematics_agents) resource for Schematics Service API.
 requirements:
   - "SchematicsV1"
 options:
-  inventories_ini:
-    description: "Input inventory of host and host group for the playbook, in the C(.ini) file format."
-    type: str
   resource_group:
-    description: "Resource-group name for the Inventory definition.   By default, Inventory definition
-      will be created in Default Resource Group."
+    description: "The resource-group name for the agent.  By default, Agent will be registered in
+      Default Resource Group."
     type: str
-  resource_queries:
-    description: "Input resource query definitions that is used to dynamically generate the inventory
-      of host and host group for the playbook."
-    type: list
-    elements: str
+  profile_id:
+    description: "The IAM trusted profile id, used by the Agent instance."
+    type: str
+  agent_location:
+    description: "The location where agent is deployed in the user environment."
+    type: str
   name:
-    description: "The unique name of your Inventory definition. The name can be up to 128 characters
-      long and can include alphanumeric characters, spaces, dashes, and underscores."
+    description: "The name of the agent (must be unique, for an account)."
     type: str
   description:
-    description: "The description of your Inventory definition. The description can be up to 2048
-      characters long in size."
+    description: "Agent description."
     type: str
   location:
     description: "List of locations supported by IBM Cloud Schematics service.  While creating your
@@ -51,9 +47,30 @@ options:
       - "us-east"
       - "eu-gb"
       - "eu-de"
-  inventory_id:
-    description: "Resource Inventory Id.  Use C(GET /v2/inventories) API to look up the Resource
-      Inventory definition Ids  in your IBM Cloud account."
+  tags:
+    description: "Tags for the agent."
+    type: list
+    elements: str
+  user_state:
+    description: "User defined status of the agent."
+    type: dict
+    suboptions:
+      state:
+        description: "User-defined states
+            * C(enable)  Agent is enabled by the user.
+            * C(disable) Agent is disbaled by the user."
+        type: str
+        choices:
+          - "enable"
+          - "disable"
+      set_by:
+        description: "Name of the User who set the state of the Object."
+        type: str
+      set_at:
+        description: "When the User who set the state of the Object."
+        type: str
+  agent_id:
+    description: "Agent ID to get the details of agent."
     type: str
   profile:
     description: "Level of details returned by the get method."
@@ -62,12 +79,6 @@ options:
       - "summary"
       - "detailed"
       - "ids"
-  propagate:
-    description: "Auto propagate the chaange or deletion to the dependent resources."
-    type: bool
-  force:
-    description: "Equivalent to -force options in the command line."
-    type: bool
   state:
     description:
       - Should the resource be present or absent.
@@ -86,48 +97,64 @@ notes:
 '''
 
 EXAMPLES = r'''
-- name: Create ibm_schematics_inventory
-  ibm_schematics_inventory:
-    name: 'testString'
-    description: 'testString'
+- name: Create ibm_schematics_agents
+  vars:
+    agent_user_state_model:
+      state: 'enable'
+  ibm_schematics_agents:
+    name: 'MyDevAgent'
+    agent_location: 'us-south'
     location: 'us-south'
+    profile_id: 'testString'
+    description: 'Register agent'
     resource_group: 'testString'
-    inventories_ini: 'testString'
-    resource_queries: ['testString']
+    tags: ['testString']
+    user_state: '{{ agent_user_state_model }}'
     state: present
 
-- name: Update ibm_schematics_inventory
-  ibm_schematics_inventory:
-    inventory_id: 'testString'
-    name: 'testString'
-    description: 'testString'
+- name: Update ibm_schematics_agents
+  vars:
+    agent_user_state_model:
+      state: 'enable'
+  ibm_schematics_agents:
+    agent_id: 'testString'
+    name: 'MyDevAgent'
+    agent_location: 'us-south'
     location: 'us-south'
+    profile_id: 'testString'
+    description: 'Register agent'
     resource_group: 'testString'
-    inventories_ini: 'testString'
-    resource_queries: ['testString']
+    tags: ['testString']
+    user_state: '{{ agent_user_state_model }}'
     state: present
 
-- name: Delete ibm_schematics_inventory
-  ibm_schematics_inventory:
-    inventory_id: 'testString'
-    force: True
-    propagate: True
+- name: Delete ibm_schematics_agents
+  ibm_schematics_agents:
+    agent_id: 'testString'
     state: absent
 '''
 
 RETURN = r'''
 name:
-  description: "The unique name of your Inventory.  The name can be up to 128 characters long and can
-    include alphanumeric  characters, spaces, dashes, and underscores."
+  description: "The name of the agent (must be unique, for an account)."
   type: str
   returned: on success for create, update operations
-id:
-  description: "Inventory id."
-  type: str
-  returned: on success for create, update, delete operations
 description:
-  description: "The description of your Inventory.  The description can be up to 2048 characters long
-    in size."
+  description: "Agent description."
+  type: str
+  returned: on success for create, update operations
+resource_group:
+  description: "The resource-group name for the agent.  By default, Agent will be registered in
+    Default Resource Group."
+  type: str
+  returned: on success for create, update operations
+tags:
+  description: "Tags for the agent."
+  type: list
+  elements: str
+  returned: on success for create, update operations
+agent_location:
+  description: "The location where agent is deployed in the user environment."
   type: str
   returned: on success for create, update operations
 location:
@@ -141,36 +168,85 @@ location:
     - "eu-gb"
     - "eu-de"
   returned: on success for create, update operations
-resource_group:
-  description: "Resource-group name for the Inventory definition.  By default, Inventory will be
-    created in Default Resource Group."
+profile_id:
+  description: "The IAM trusted profile id, used by the Agent instance."
   type: str
   returned: on success for create, update operations
-created_at:
-  description: "Inventory creation time."
+agent_crn:
+  description: "The Agent crn, obtained from the Schematics Agent deployment configuration."
   type: str
   returned: on success for create, update operations
-created_by:
-  description: "Email address of user who created the Inventory."
+id:
+  description: "The Agent registration id."
+  type: str
+  returned: on success for create, update, delete operations
+registered_at:
+  description: "The Agent registration date-time."
+  type: str
+  returned: on success for create, update operations
+registered_by:
+  description: "The email address of an user who registered the Agent."
   type: str
   returned: on success for create, update operations
 updated_at:
-  description: "Inventory updation time."
+  description: "The Agent registration updation time."
   type: str
   returned: on success for create, update operations
 updated_by:
-  description: "Email address of user who updated the Inventory."
+  description: "Email address of user who updated the Agent registration."
   type: str
   returned: on success for create, update operations
-inventories_ini:
-  description: "Input inventory of host and host group for the playbook,  in the .ini file format."
-  type: str
+user_state:
+  description: "User defined status of the agent."
+  type: dict
+  contains:
+    state:
+      description: "User-defined states
+          * C(enable)  Agent is enabled by the user.
+          * C(disable) Agent is disbaled by the user."
+      type: str
+      choices:
+        - 'enable'
+        - 'disable'
+    set_by:
+      description: "Name of the User who set the state of the Object."
+      type: str
+    set_at:
+      description: "When the User who set the state of the Object."
+      type: str
   returned: on success for create, update operations
-resource_queries:
-  description: "Input resource queries that is used to dynamically generate  the inventory of host and
-    host group for the playbook."
-  type: list
-  elements: str
+connection_state:
+  description: "Connection status of the agent."
+  type: dict
+  contains:
+    state:
+      description: "Agent Connection Status
+          * C(Connected) When Schematics is able to connect to the agent.
+          * C(Disconnected) When Schematics is able not connect to the agent."
+      type: str
+      choices:
+        - 'Connected'
+        - 'Disconnected'
+    checked_at:
+      description: "When the connection state is modified."
+      type: str
+  returned: on success for create, update operations
+system_state:
+  description: "Computed state of the agent."
+  type: dict
+  contains:
+    state:
+      description: "Agent Status."
+      type: str
+      choices:
+        - 'error'
+        - 'normal'
+        - 'in_progress'
+        - 'pending'
+        - 'draft'
+    message_:
+      description: "The Agent status message."
+      type: str
   returned: on success for create, update operations
 status:
   description: The result status of the deletion
@@ -197,15 +273,14 @@ else:
 
 def run_module():
     module_args = dict(
-        inventories_ini=dict(
-            type='str',
-            required=False),
         resource_group=dict(
             type='str',
             required=False),
-        resource_queries=dict(
-            type='list',
-            elements='str',
+        profile_id=dict(
+            type='str',
+            required=False),
+        agent_location=dict(
+            type='str',
             required=False),
         name=dict(
             type='str',
@@ -222,7 +297,30 @@ def run_module():
                 'eu-de',
             ],
             required=False),
-        inventory_id=dict(
+        tags=dict(
+            type='list',
+            elements='str',
+            required=False),
+        # Represents the AgentUserState Python class
+        user_state=dict(
+            type='dict',
+            options=dict(
+                state=dict(
+                    type='str',
+                    choices=[
+                        'enable',
+                        'disable',
+                    ],
+                    required=False),
+                set_by=dict(
+                    type='str',
+                    required=False),
+                set_at=dict(
+                    type='str',
+                    required=False),
+            ),
+            required=False),
+        agent_id=dict(
             type='str',
             required=False),
         profile=dict(
@@ -232,12 +330,6 @@ def run_module():
                 'detailed',
                 'ids',
             ],
-            required=False),
-        propagate=dict(
-            type='bool',
-            required=False),
-        force=dict(
-            type='bool',
             required=False),
         state=dict(
             type='str',
@@ -254,16 +346,16 @@ def run_module():
     if MISSING_IMPORT_EXC is not None:
         module.fail_json(msg='Missing required import: ' + MISSING_IMPORT_EXC.msg)
 
-    inventories_ini = module.params["inventories_ini"]
     resource_group = module.params["resource_group"]
-    resource_queries = module.params["resource_queries"]
+    profile_id = module.params["profile_id"]
+    agent_location = module.params["agent_location"]
     name = module.params["name"]
     description = module.params["description"]
     location = module.params["location"]
-    inventory_id = module.params["inventory_id"]
+    tags = module.params["tags"]
+    user_state = module.params["user_state"]
+    agent_id = module.params["agent_id"]
     profile = module.params["profile"]
-    propagate = module.params["propagate"]
-    force = module.params["force"]
     state = module.params["state"]
 
     authenticator = get_authenticator(service_name='schematics')
@@ -279,10 +371,10 @@ def run_module():
     resource_exists = True
 
     # Check for existence
-    if inventory_id:
+    if agent_id:
         try:
-            sdk.get_inventory(
-                inventory_id=inventory_id,
+            sdk.get_agent(
+                agent_id=agent_id,
                 profile=profile,
             )
         except ApiException as ex:
@@ -298,29 +390,29 @@ def run_module():
     if state == "absent":
         if resource_exists:
             try:
-                sdk.delete_inventory(
-                    inventory_id=inventory_id,
-                    force=force,
-                    propagate=propagate,
+                sdk.delete_agent(
+                    agent_id=agent_id,
                 )
             except ApiException as ex:
                 module.fail_json(msg=ex.message)
             else:
-                module.exit_json(changed=True, id=inventory_id, status="deleted")
+                module.exit_json(changed=True, id=agent_id, status="deleted")
         else:
-            module.exit_json(changed=False, id=inventory_id, status="not_found")
+            module.exit_json(changed=False, id=agent_id, status="not_found")
 
     if state == "present":
         if not resource_exists:
             # Create path
             try:
-                response = sdk.create_inventory(
+                response = sdk.register_agent(
                     name=name,
-                    description=description,
+                    agent_location=agent_location,
                     location=location,
+                    profile_id=profile_id,
+                    description=description,
                     resource_group=resource_group,
-                    inventories_ini=inventories_ini,
-                    resource_queries=resource_queries,
+                    tags=tags,
+                    user_state=user_state,
                 )
             except ApiException as ex:
                 module.fail_json(msg=ex.message)
@@ -331,14 +423,16 @@ def run_module():
         else:
             # Update path
             try:
-                response = sdk.replace_inventory(
-                    inventory_id=inventory_id,
+                response = sdk.update_agent_registration(
+                    agent_id=agent_id,
                     name=name,
-                    description=description,
+                    agent_location=agent_location,
                     location=location,
+                    profile_id=profile_id,
+                    description=description,
                     resource_group=resource_group,
-                    inventories_ini=inventories_ini,
-                    resource_queries=resource_queries,
+                    tags=tags,
+                    user_state=user_state,
                 )
             except ApiException as ex:
                 module.fail_json(msg=ex.message)

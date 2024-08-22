@@ -11,18 +11,17 @@ __metaclass__ = type
 
 DOCUMENTATION = r'''
 ---
-module: ibm_schematics_inventory_info
-short_description: Manage C(schematics_inventory) for Schematics Service API.
+module: ibm_schematics_agents_info
+short_description: Manage C(schematics_agents) for Schematics Service API.
 author: Gannayak Pabra (@Gannayak0722)
 version_added: "1.0.0"
 description:
-  - This module retrieves one or more C(schematics_inventory) for Schematics Service API.
+  - This module retrieves one or more C(schematics_agents) for Schematics Service API.
 requirements:
   - "SchematicsV1"
 options:
-  inventory_id:
-    description: "Resource Inventory Id.  Use C(GET /v2/inventories) API to look up the Resource
-      Inventory definition Ids  in your IBM Cloud account."
+  agent_id:
+    description: "Agent ID to get the details of agent."
     type: str
   profile:
     description: "Level of details returned by the get method."
@@ -43,25 +42,33 @@ notes:
 '''
 
 EXAMPLES = r'''
-- name: Read ibm_schematics_inventory
-  ibm_schematics_inventory_info:
-    inventory_id: 'testString'
+- name: Read ibm_schematics_agents
+  ibm_schematics_agents_info:
+    agent_id: 'testString'
     profile: 'summary'
 '''
 
 RETURN = r'''
 name:
-  description: "The unique name of your Inventory.  The name can be up to 128 characters long and can
-    include alphanumeric  characters, spaces, dashes, and underscores."
-  type: str
-  returned: on success for read operation
-id:
-  description: "Inventory id."
+  description: "The name of the agent (must be unique, for an account)."
   type: str
   returned: on success for read operation
 description:
-  description: "The description of your Inventory.  The description can be up to 2048 characters long
-    in size."
+  description: "Agent description."
+  type: str
+  returned: on success for read operation
+resource_group:
+  description: "The resource-group name for the agent.  By default, Agent will be registered in
+    Default Resource Group."
+  type: str
+  returned: on success for read operation
+tags:
+  description: "Tags for the agent."
+  type: list
+  elements: str
+  returned: on success for read operation
+agent_location:
+  description: "The location where agent is deployed in the user environment."
   type: str
   returned: on success for read operation
 location:
@@ -75,36 +82,85 @@ location:
     - "eu-gb"
     - "eu-de"
   returned: on success for read operation
-resource_group:
-  description: "Resource-group name for the Inventory definition.  By default, Inventory will be
-    created in Default Resource Group."
+profile_id:
+  description: "The IAM trusted profile id, used by the Agent instance."
   type: str
   returned: on success for read operation
-created_at:
-  description: "Inventory creation time."
+agent_crn:
+  description: "The Agent crn, obtained from the Schematics Agent deployment configuration."
   type: str
   returned: on success for read operation
-created_by:
-  description: "Email address of user who created the Inventory."
+id:
+  description: "The Agent registration id."
+  type: str
+  returned: on success for read operation
+registered_at:
+  description: "The Agent registration date-time."
+  type: str
+  returned: on success for read operation
+registered_by:
+  description: "The email address of an user who registered the Agent."
   type: str
   returned: on success for read operation
 updated_at:
-  description: "Inventory updation time."
+  description: "The Agent registration updation time."
   type: str
   returned: on success for read operation
 updated_by:
-  description: "Email address of user who updated the Inventory."
+  description: "Email address of user who updated the Agent registration."
   type: str
   returned: on success for read operation
-inventories_ini:
-  description: "Input inventory of host and host group for the playbook,  in the .ini file format."
-  type: str
+user_state:
+  description: "User defined status of the agent."
+  type: dict
+  contains:
+    state:
+      description: "User-defined states
+          * C(enable)  Agent is enabled by the user.
+          * C(disable) Agent is disbaled by the user."
+      type: str
+      choices:
+        - 'enable'
+        - 'disable'
+    set_by:
+      description: "Name of the User who set the state of the Object."
+      type: str
+    set_at:
+      description: "When the User who set the state of the Object."
+      type: str
   returned: on success for read operation
-resource_queries:
-  description: "Input resource queries that is used to dynamically generate  the inventory of host and
-    host group for the playbook."
-  type: list
-  elements: str
+connection_state:
+  description: "Connection status of the agent."
+  type: dict
+  contains:
+    state:
+      description: "Agent Connection Status
+          * C(Connected) When Schematics is able to connect to the agent.
+          * C(Disconnected) When Schematics is able not connect to the agent."
+      type: str
+      choices:
+        - 'Connected'
+        - 'Disconnected'
+    checked_at:
+      description: "When the connection state is modified."
+      type: str
+  returned: on success for read operation
+system_state:
+  description: "Computed state of the agent."
+  type: dict
+  contains:
+    state:
+      description: "Agent Status."
+      type: str
+      choices:
+        - 'error'
+        - 'normal'
+        - 'in_progress'
+        - 'pending'
+        - 'draft'
+    message_:
+      description: "The Agent status message."
+      type: str
   returned: on success for read operation
 msg:
   description: an error message that describes what went wrong
@@ -127,7 +183,7 @@ else:
 
 def run_module():
     module_args = dict(
-        inventory_id=dict(
+        agent_id=dict(
             type='str',
             required=False),
         profile=dict(
@@ -148,7 +204,7 @@ def run_module():
     if MISSING_IMPORT_EXC is not None:
         module.fail_json(msg='Missing required import: ' + MISSING_IMPORT_EXC.msg)
 
-    inventory_id = module.params["inventory_id"]
+    agent_id = module.params["agent_id"]
     profile = module.params["profile"]
 
     if module.check_mode:
@@ -164,11 +220,11 @@ def run_module():
 
     sdk.configure_service('schematics')
 
-    if inventory_id:
+    if agent_id:
         # read
         try:
-            response = sdk.get_inventory(
-                inventory_id=inventory_id,
+            response = sdk.get_agent(
+                agent_id=agent_id,
                 profile=profile,
             )
 
