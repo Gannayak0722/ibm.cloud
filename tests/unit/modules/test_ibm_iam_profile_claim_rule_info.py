@@ -9,7 +9,7 @@ import os
 
 from ansible_collections.community.internal_test_tools.tests.unit.compat.mock import patch
 from ansible_collections.community.internal_test_tools.tests.unit.plugins.modules.utils import ModuleTestCase, AnsibleFailJson, AnsibleExitJson, set_module_args
-from plugins.modules import ibm_iam_service_id_info
+from plugins.modules import ibm_iam_profile_claim_rule_info
 
 try:
     from .common import DetailedResponseMock
@@ -24,10 +24,10 @@ def mock_operations(func):
     def wrapper(self):
         # Make sure the imports are correct in both test and module packages.
         self.assertIsNone(MISSING_IMPORT_EXC)
-        self.assertIsNone(ibm_iam_service_id_info.MISSING_IMPORT_EXC)
+        self.assertIsNone(ibm_iam_profile_claim_rule_info.MISSING_IMPORT_EXC)
 
         # Set-up mocks for each operation.
-        self.read_patcher = patch('plugins.modules.ibm_iam_service_id_info.IamIdentityV1.get_service_id')
+        self.read_patcher = patch('plugins.modules.ibm_iam_profile_claim_rule_info.IamIdentityV1.get_claim_rule')
         self.read_mock = self.read_patcher.start()
 
         # Run the actual function.
@@ -39,60 +39,55 @@ def mock_operations(func):
     return wrapper
 
 
-class TestServiceIdModuleInfo(ModuleTestCase):
+class TestProfileClaimRuleModuleInfo(ModuleTestCase):
     """
-    Test class for ServiceId module testing.
+    Test class for ProfileClaimRule module testing.
     """
 
     @mock_operations
-    def test_read_ibm_iam_service_id_success(self):
+    def test_read_ibm_iam_profile_claim_rule_success(self):
         """Test the "read" path - successful."""
         datasource = {
-            'id': 'testString',
-            'include_history': False,
-            'include_activity': False,
+            'profile_id': 'testString',
+            'rule_id': 'testString',
         }
 
         self.read_mock.return_value = DetailedResponseMock(datasource)
 
         set_module_args({
-            'id': 'testString',
-            'include_history': False,
-            'include_activity': False,
+            'profile_id': 'testString',
+            'rule_id': 'testString',
         })
 
         with self.assertRaises(AnsibleExitJson) as result:
             os.environ['IAM_IDENTITY_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_service_id_info.main()
+            ibm_iam_profile_claim_rule_info.main()
 
         for field, value in datasource.items():
             self.assertEqual(value, result.exception.args[0].get(field))
 
         self.read_mock.assert_called_once_with(
-            id='testString',
-            include_history=False,
-            include_activity=False,
+            profile_id='testString',
+            rule_id='testString',
         )
 
     @mock_operations
-    def test_read_ibm_iam_service_id_failed(self):
+    def test_read_ibm_iam_profile_claim_rule_failed(self):
         """Test the "read" path - failed."""
-        self.read_mock.side_effect = ApiException(400, message='Read ibm_iam_service_id error')
+        self.read_mock.side_effect = ApiException(400, message='Read ibm_iam_profile_claim_rule error')
 
         set_module_args({
-            'id': 'testString',
-            'include_history': False,
-            'include_activity': False,
+            'profile_id': 'testString',
+            'rule_id': 'testString',
         })
 
         with self.assertRaises(AnsibleFailJson) as result:
             os.environ['IAM_IDENTITY_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_service_id_info.main()
+            ibm_iam_profile_claim_rule_info.main()
 
-        self.assertEqual(result.exception.args[0]['msg'], 'Read ibm_iam_service_id error')
+        self.assertEqual(result.exception.args[0]['msg'], 'Read ibm_iam_profile_claim_rule error')
 
         self.read_mock.assert_called_once_with(
-            id='testString',
-            include_history=False,
-            include_activity=False,
+            profile_id='testString',
+            rule_id='testString',
         )

@@ -9,7 +9,7 @@ import os
 
 from ansible_collections.community.internal_test_tools.tests.unit.compat.mock import patch
 from ansible_collections.community.internal_test_tools.tests.unit.plugins.modules.utils import ModuleTestCase, AnsibleFailJson, AnsibleExitJson, set_module_args
-from plugins.modules import ibm_iam_service_id
+from plugins.modules import ibm_iam_profile_link
 
 try:
     from .common import DetailedResponseMock
@@ -78,16 +78,14 @@ def mock_operations(func):
     def wrapper(self):
         # Make sure the imports are correct in both test and module packages.
         self.assertIsNone(MISSING_IMPORT_EXC)
-        self.assertIsNone(ibm_iam_service_id.MISSING_IMPORT_EXC)
+        self.assertIsNone(ibm_iam_profile_link.MISSING_IMPORT_EXC)
 
         # Set-up mocks for each operation.
-        self.read_patcher = patch('plugins.modules.ibm_iam_service_id.IamIdentityV1.get_service_id')
+        self.read_patcher = patch('plugins.modules.ibm_iam_profile_link.IamIdentityV1.get_link')
         self.read_mock = self.read_patcher.start()
-        self.create_patcher = patch('plugins.modules.ibm_iam_service_id.IamIdentityV1.create_service_id')
+        self.create_patcher = patch('plugins.modules.ibm_iam_profile_link.IamIdentityV1.create_link')
         self.create_mock = self.create_patcher.start()
-        self.update_patcher = patch('plugins.modules.ibm_iam_service_id.IamIdentityV1.update_service_id')
-        self.update_mock = self.update_patcher.start()
-        self.delete_patcher = patch('plugins.modules.ibm_iam_service_id.IamIdentityV1.delete_service_id')
+        self.delete_patcher = patch('plugins.modules.ibm_iam_profile_link.IamIdentityV1.delete_link')
         self.delete_mock = self.delete_patcher.start()
 
         # Run the actual function.
@@ -96,248 +94,128 @@ def mock_operations(func):
         # Stop the patchers.
         self.read_patcher.stop()
         self.create_patcher.stop()
-        self.update_patcher.stop()
         self.delete_patcher.stop()
 
     return wrapper
 
 
-class TestServiceIdModule(ModuleTestCase):
+class TestProfileLinkModule(ModuleTestCase):
     """
-    Test class for ServiceId module testing.
+    Test class for ProfileLink module testing.
     """
 
     @mock_operations
-    def test_read_ibm_iam_service_id_failed(self):
+    def test_read_ibm_iam_profile_link_failed(self):
         """Test the inner "read" path in this module with a server error response."""
         self.read_mock.side_effect = ApiException(500, message='Something went wrong...')
 
         set_module_args({
-            'id': 'testString',
-            'include_history': False,
-            'include_activity': False,
+            'profile_id': 'testString',
+            'link_id': 'testString',
         })
 
         with self.assertRaises(AnsibleFailJson) as result:
             os.environ['IAM_IDENTITY_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_service_id.main()
+            ibm_iam_profile_link.main()
 
         self.assertEqual(result.exception.args[0]['msg'], 'Something went wrong...')
 
         mock_data = dict(
-            id='testString',
-            include_history=False,
-            include_activity=False,
+            profile_id='testString',
+            link_id='testString',
         )
 
         self.read_mock.assert_called_once()
         self.assertTrue(checkResult(mock_data, self.read_mock.call_args.kwargs))
 
     @mock_operations
-    def test_create_ibm_iam_service_id_success(self):
+    def test_create_ibm_iam_profile_link_success(self):
         """Test the "create" path - successful."""
-        api_key_inside_create_service_id_request_model = {
+        create_profile_link_request_link_model = {
+            'crn': 'testString',
+            'namespace': 'testString',
             'name': 'testString',
-            'description': 'testString',
-            'apikey': 'testString',
-            'store_value': True,
         }
 
         resource = {
-            'account_id': 'testString',
+            'profile_id': 'testString',
+            'cr_type': 'testString',
+            'link': create_profile_link_request_link_model,
             'name': 'testString',
-            'description': 'testString',
-            'unique_instance_crns': ['testString'],
-            'apikey': api_key_inside_create_service_id_request_model,
-            'entity_lock': 'false',
         }
 
         self.read_mock.side_effect = ApiException(404)
         self.create_mock.return_value = DetailedResponseMock(resource)
 
         set_module_args({
-            'account_id': 'testString',
+            'profile_id': 'testString',
+            'cr_type': 'testString',
+            'link': create_profile_link_request_link_model,
             'name': 'testString',
-            'description': 'testString',
-            'unique_instance_crns': ['testString'],
-            'apikey': api_key_inside_create_service_id_request_model,
-            'entity_lock': 'false',
         })
 
         with self.assertRaises(AnsibleExitJson) as result:
             os.environ['IAM_IDENTITY_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_service_id.main()
+            ibm_iam_profile_link.main()
 
         self.assertTrue(result.exception.args[0]['changed'])
         for field, value in resource.items():
             self.assertEqual(value, result.exception.args[0].get(field))
 
         mock_data = dict(
-            account_id='testString',
+            profile_id='testString',
+            cr_type='testString',
+            link=create_profile_link_request_link_model,
             name='testString',
-            description='testString',
-            unique_instance_crns=['testString'],
-            apikey=api_key_inside_create_service_id_request_model,
-            entity_lock='false',
         )
 
         self.create_mock.assert_called_once()
         self.assertTrue(checkResult(mock_data, self.create_mock.call_args.kwargs))
 
     @mock_operations
-    def test_create_ibm_iam_service_id_failed(self):
+    def test_create_ibm_iam_profile_link_failed(self):
         """Test the "create" path - failed."""
         self.read_mock.side_effect = ApiException(404)
-        self.create_mock.side_effect = ApiException(400, message='Create ibm_iam_service_id error')
+        self.create_mock.side_effect = ApiException(400, message='Create ibm_iam_profile_link error')
 
-        api_key_inside_create_service_id_request_model = {
+        create_profile_link_request_link_model = {
+            'crn': 'testString',
+            'namespace': 'testString',
             'name': 'testString',
-            'description': 'testString',
-            'apikey': 'testString',
-            'store_value': True,
         }
 
         set_module_args({
-            'account_id': 'testString',
+            'profile_id': 'testString',
+            'cr_type': 'testString',
+            'link': create_profile_link_request_link_model,
             'name': 'testString',
-            'description': 'testString',
-            'unique_instance_crns': ['testString'],
-            'apikey': api_key_inside_create_service_id_request_model,
-            'entity_lock': 'false',
         })
 
         with self.assertRaises(AnsibleFailJson) as result:
             os.environ['IAM_IDENTITY_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_service_id.main()
+            ibm_iam_profile_link.main()
 
-        self.assertEqual(result.exception.args[0]['msg'], 'Create ibm_iam_service_id error')
+        self.assertEqual(result.exception.args[0]['msg'], 'Create ibm_iam_profile_link error')
 
         mock_data = dict(
-            account_id='testString',
+            profile_id='testString',
+            cr_type='testString',
+            link=create_profile_link_request_link_model,
             name='testString',
-            description='testString',
-            unique_instance_crns=['testString'],
-            apikey=api_key_inside_create_service_id_request_model,
-            entity_lock='false',
         )
 
         self.create_mock.assert_called_once()
         self.assertTrue(checkResult(mock_data, self.create_mock.call_args.kwargs))
 
     @mock_operations
-    def test_update_ibm_iam_service_id_success(self):
-        """Test the "update" path - successful."""
-        resource = {
-            'id': 'testString',
-            'if_match': 'testString',
-            'name': 'testString',
-            'description': 'testString',
-            'unique_instance_crns': ['testString'],
-        }
-
-        self.read_mock.return_value = DetailedResponseMock(resource)
-        self.update_mock.return_value = DetailedResponseMock(resource)
-
-        set_module_args({
-            'id': 'testString',
-            'if_match': 'testString',
-            'name': 'testString',
-            'description': 'testString',
-            'unique_instance_crns': ['testString'],
-        })
-
-        with self.assertRaises(AnsibleExitJson) as result:
-            os.environ['IAM_IDENTITY_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_service_id.main()
-
-        self.assertTrue(result.exception.args[0]['changed'])
-        for field, value in resource.items():
-            self.assertEqual(value, result.exception.args[0].get(field))
-
-        mock_data = dict(
-            id='testString',
-            if_match='testString',
-            name='testString',
-            description='testString',
-            unique_instance_crns=['testString'],
-        )
-
-        self.update_mock.assert_called_once()
-        self.assertTrue(checkResult(mock_data, self.update_mock.call_args.kwargs))
-
-        read_mock_data = dict(
-            id='testString',
-            include_history=False,
-            include_activity=False,
-        )
-        # Set the variables that belong to the "read" path to `None`
-        # because we test the "update" path here.
-        for param in read_mock_data:
-            read_mock_data[param] = mock_data.get(param, None)
-
-        self.read_mock.assert_called_once()
-        self.assertTrue(checkResult(read_mock_data, self.read_mock.call_args.kwargs))
-
-    @mock_operations
-    def test_update_ibm_iam_service_id_failed(self):
-        """Test the "update" path - failed."""
-        resource = {
-            'id': 'testString',
-            'if_match': 'testString',
-            'name': 'testString',
-            'description': 'testString',
-            'unique_instance_crns': ['testString'],
-        }
-
-        self.read_mock.return_value = DetailedResponseMock(resource)
-        self.update_mock.side_effect = ApiException(400, message='Update ibm_iam_service_id error')
-
-        set_module_args({
-            'id': 'testString',
-            'if_match': 'testString',
-            'name': 'testString',
-            'description': 'testString',
-            'unique_instance_crns': ['testString'],
-        })
-
-        with self.assertRaises(AnsibleFailJson) as result:
-            os.environ['IAM_IDENTITY_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_service_id.main()
-
-        self.assertEqual(result.exception.args[0]['msg'], 'Update ibm_iam_service_id error')
-
-        mock_data = dict(
-            id='testString',
-            if_match='testString',
-            name='testString',
-            description='testString',
-            unique_instance_crns=['testString'],
-        )
-
-        self.update_mock.assert_called_once()
-        self.assertTrue(checkResult(mock_data, self.update_mock.call_args.kwargs))
-
-        read_mock_data = dict(
-            id='testString',
-            include_history=False,
-            include_activity=False,
-        )
-        # Set the variables that belong to the "read" path to `None`
-        # because we test the "update" path here.
-        for param in read_mock_data:
-            read_mock_data[param] = mock_data.get(param, None)
-
-        self.read_mock.assert_called_once()
-        self.assertTrue(checkResult(read_mock_data, self.read_mock.call_args.kwargs))
-
-    @mock_operations
-    def test_delete_ibm_iam_service_id_success(self):
+    def test_delete_ibm_iam_profile_link_success(self):
         """Test the "delete" path - successfull."""
         self.read_mock.return_value = DetailedResponseMock()
         self.delete_mock.return_value = DetailedResponseMock()
 
         args = {
-            'id': 'testString',
+            'profile_id': 'testString',
+            'link_id': 'testString',
             'state': 'absent',
         }
 
@@ -345,23 +223,23 @@ class TestServiceIdModule(ModuleTestCase):
 
         with self.assertRaises(AnsibleExitJson) as result:
             os.environ['IAM_IDENTITY_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_service_id.main()
+            ibm_iam_profile_link.main()
 
         self.assertTrue(result.exception.args[0]['changed'])
         self.assertEqual(result.exception.args[0]['id'], 'testString')
         self.assertEqual(result.exception.args[0]['status'], 'deleted')
 
         mock_data = dict(
-            id='testString',
+            profile_id='testString',
+            link_id='testString',
         )
 
         self.delete_mock.assert_called_once()
         self.assertTrue(checkResult(mock_data, self.delete_mock.call_args.kwargs))
 
         read_mock_data = dict(
-            id='testString',
-            include_history=False,
-            include_activity=False,
+            profile_id='testString',
+            link_id='testString',
         )
         # Set the variables that belong to the "read" path to `None`
         # because we test the "delete" path here.
@@ -372,13 +250,14 @@ class TestServiceIdModule(ModuleTestCase):
         self.assertTrue(checkResult(read_mock_data, self.read_mock.call_args.kwargs))
 
     @mock_operations
-    def test_delete_ibm_iam_service_id_not_exists(self):
+    def test_delete_ibm_iam_profile_link_not_exists(self):
         """Test the "delete" path - not exists."""
         self.read_mock.side_effect = ApiException(404)
         self.delete_mock.return_value = DetailedResponseMock()
 
         args = {
-            'id': 'testString',
+            'profile_id': 'testString',
+            'link_id': 'testString',
             'state': 'absent',
         }
 
@@ -386,22 +265,22 @@ class TestServiceIdModule(ModuleTestCase):
 
         with self.assertRaises(AnsibleExitJson) as result:
             os.environ['IAM_IDENTITY_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_service_id.main()
+            ibm_iam_profile_link.main()
 
         self.assertFalse(result.exception.args[0]['changed'])
         self.assertEqual(result.exception.args[0]['id'], 'testString')
         self.assertEqual(result.exception.args[0]['status'], 'not_found')
 
         mock_data = dict(
-            id='testString',
+            profile_id='testString',
+            link_id='testString',
         )
 
         self.delete_mock.assert_not_called()
 
         read_mock_data = dict(
-            id='testString',
-            include_history=False,
-            include_activity=False,
+            profile_id='testString',
+            link_id='testString',
         )
         # Set the variables that belong to the "read" path to `None`
         # because we test the "delete" path here.
@@ -412,33 +291,34 @@ class TestServiceIdModule(ModuleTestCase):
         self.assertTrue(checkResult(read_mock_data, self.read_mock.call_args.kwargs))
 
     @mock_operations
-    def test_delete_ibm_iam_service_id_failed(self):
+    def test_delete_ibm_iam_profile_link_failed(self):
         """Test the "delete" path - failed."""
         self.read_mock.return_value = DetailedResponseMock()
-        self.delete_mock.side_effect = ApiException(400, message='Delete ibm_iam_service_id error')
+        self.delete_mock.side_effect = ApiException(400, message='Delete ibm_iam_profile_link error')
 
         set_module_args({
-            'id': 'testString',
+            'profile_id': 'testString',
+            'link_id': 'testString',
             'state': 'absent',
         })
 
         with self.assertRaises(AnsibleFailJson) as result:
             os.environ['IAM_IDENTITY_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_service_id.main()
+            ibm_iam_profile_link.main()
 
-        self.assertEqual(result.exception.args[0]['msg'], 'Delete ibm_iam_service_id error')
+        self.assertEqual(result.exception.args[0]['msg'], 'Delete ibm_iam_profile_link error')
 
         mock_data = dict(
-            id='testString',
+            profile_id='testString',
+            link_id='testString',
         )
 
         self.delete_mock.assert_called_once()
         self.assertTrue(checkResult(mock_data, self.delete_mock.call_args.kwargs))
 
         read_mock_data = dict(
-            id='testString',
-            include_history=False,
-            include_activity=False,
+            profile_id='testString',
+            link_id='testString',
         )
         # Set the variables that belong to the "read" path to `None`
         # because we test the "delete" path here.

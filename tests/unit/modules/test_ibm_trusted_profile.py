@@ -9,7 +9,7 @@ import os
 
 from ansible_collections.community.internal_test_tools.tests.unit.compat.mock import patch
 from ansible_collections.community.internal_test_tools.tests.unit.plugins.modules.utils import ModuleTestCase, AnsibleFailJson, AnsibleExitJson, set_module_args
-from plugins.modules import ibm_iam_service_id
+from plugins.modules import ibm_trusted_profile
 
 try:
     from .common import DetailedResponseMock
@@ -78,16 +78,16 @@ def mock_operations(func):
     def wrapper(self):
         # Make sure the imports are correct in both test and module packages.
         self.assertIsNone(MISSING_IMPORT_EXC)
-        self.assertIsNone(ibm_iam_service_id.MISSING_IMPORT_EXC)
+        self.assertIsNone(ibm_trusted_profile.MISSING_IMPORT_EXC)
 
         # Set-up mocks for each operation.
-        self.read_patcher = patch('plugins.modules.ibm_iam_service_id.IamIdentityV1.get_service_id')
+        self.read_patcher = patch('plugins.modules.ibm_trusted_profile.IamIdentityV1.get_profile')
         self.read_mock = self.read_patcher.start()
-        self.create_patcher = patch('plugins.modules.ibm_iam_service_id.IamIdentityV1.create_service_id')
+        self.create_patcher = patch('plugins.modules.ibm_trusted_profile.IamIdentityV1.create_profile')
         self.create_mock = self.create_patcher.start()
-        self.update_patcher = patch('plugins.modules.ibm_iam_service_id.IamIdentityV1.update_service_id')
+        self.update_patcher = patch('plugins.modules.ibm_trusted_profile.IamIdentityV1.update_profile')
         self.update_mock = self.update_patcher.start()
-        self.delete_patcher = patch('plugins.modules.ibm_iam_service_id.IamIdentityV1.delete_service_id')
+        self.delete_patcher = patch('plugins.modules.ibm_trusted_profile.IamIdentityV1.delete_profile')
         self.delete_mock = self.delete_patcher.start()
 
         # Run the actual function.
@@ -102,31 +102,29 @@ def mock_operations(func):
     return wrapper
 
 
-class TestServiceIdModule(ModuleTestCase):
+class TestTrustedProfileModule(ModuleTestCase):
     """
-    Test class for ServiceId module testing.
+    Test class for TrustedProfile module testing.
     """
 
     @mock_operations
-    def test_read_ibm_iam_service_id_failed(self):
+    def test_read_ibm_trusted_profile_failed(self):
         """Test the inner "read" path in this module with a server error response."""
         self.read_mock.side_effect = ApiException(500, message='Something went wrong...')
 
         set_module_args({
-            'id': 'testString',
-            'include_history': False,
+            'profile_id': 'testString',
             'include_activity': False,
         })
 
         with self.assertRaises(AnsibleFailJson) as result:
             os.environ['IAM_IDENTITY_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_service_id.main()
+            ibm_trusted_profile.main()
 
         self.assertEqual(result.exception.args[0]['msg'], 'Something went wrong...')
 
         mock_data = dict(
-            id='testString',
-            include_history=False,
+            profile_id='testString',
             include_activity=False,
         )
 
@@ -134,140 +132,107 @@ class TestServiceIdModule(ModuleTestCase):
         self.assertTrue(checkResult(mock_data, self.read_mock.call_args.kwargs))
 
     @mock_operations
-    def test_create_ibm_iam_service_id_success(self):
+    def test_create_ibm_trusted_profile_success(self):
         """Test the "create" path - successful."""
-        api_key_inside_create_service_id_request_model = {
-            'name': 'testString',
-            'description': 'testString',
-            'apikey': 'testString',
-            'store_value': True,
-        }
-
         resource = {
-            'account_id': 'testString',
             'name': 'testString',
+            'account_id': 'testString',
             'description': 'testString',
-            'unique_instance_crns': ['testString'],
-            'apikey': api_key_inside_create_service_id_request_model,
-            'entity_lock': 'false',
         }
 
         self.read_mock.side_effect = ApiException(404)
         self.create_mock.return_value = DetailedResponseMock(resource)
 
         set_module_args({
-            'account_id': 'testString',
             'name': 'testString',
+            'account_id': 'testString',
             'description': 'testString',
-            'unique_instance_crns': ['testString'],
-            'apikey': api_key_inside_create_service_id_request_model,
-            'entity_lock': 'false',
         })
 
         with self.assertRaises(AnsibleExitJson) as result:
             os.environ['IAM_IDENTITY_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_service_id.main()
+            ibm_trusted_profile.main()
 
         self.assertTrue(result.exception.args[0]['changed'])
         for field, value in resource.items():
             self.assertEqual(value, result.exception.args[0].get(field))
 
         mock_data = dict(
-            account_id='testString',
             name='testString',
+            account_id='testString',
             description='testString',
-            unique_instance_crns=['testString'],
-            apikey=api_key_inside_create_service_id_request_model,
-            entity_lock='false',
         )
 
         self.create_mock.assert_called_once()
         self.assertTrue(checkResult(mock_data, self.create_mock.call_args.kwargs))
 
     @mock_operations
-    def test_create_ibm_iam_service_id_failed(self):
+    def test_create_ibm_trusted_profile_failed(self):
         """Test the "create" path - failed."""
         self.read_mock.side_effect = ApiException(404)
-        self.create_mock.side_effect = ApiException(400, message='Create ibm_iam_service_id error')
-
-        api_key_inside_create_service_id_request_model = {
-            'name': 'testString',
-            'description': 'testString',
-            'apikey': 'testString',
-            'store_value': True,
-        }
+        self.create_mock.side_effect = ApiException(400, message='Create ibm_trusted_profile error')
 
         set_module_args({
-            'account_id': 'testString',
             'name': 'testString',
+            'account_id': 'testString',
             'description': 'testString',
-            'unique_instance_crns': ['testString'],
-            'apikey': api_key_inside_create_service_id_request_model,
-            'entity_lock': 'false',
         })
 
         with self.assertRaises(AnsibleFailJson) as result:
             os.environ['IAM_IDENTITY_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_service_id.main()
+            ibm_trusted_profile.main()
 
-        self.assertEqual(result.exception.args[0]['msg'], 'Create ibm_iam_service_id error')
+        self.assertEqual(result.exception.args[0]['msg'], 'Create ibm_trusted_profile error')
 
         mock_data = dict(
-            account_id='testString',
             name='testString',
+            account_id='testString',
             description='testString',
-            unique_instance_crns=['testString'],
-            apikey=api_key_inside_create_service_id_request_model,
-            entity_lock='false',
         )
 
         self.create_mock.assert_called_once()
         self.assertTrue(checkResult(mock_data, self.create_mock.call_args.kwargs))
 
     @mock_operations
-    def test_update_ibm_iam_service_id_success(self):
+    def test_update_ibm_trusted_profile_success(self):
         """Test the "update" path - successful."""
         resource = {
-            'id': 'testString',
+            'profile_id': 'testString',
             'if_match': 'testString',
             'name': 'testString',
             'description': 'testString',
-            'unique_instance_crns': ['testString'],
         }
 
         self.read_mock.return_value = DetailedResponseMock(resource)
         self.update_mock.return_value = DetailedResponseMock(resource)
 
         set_module_args({
-            'id': 'testString',
+            'profile_id': 'testString',
             'if_match': 'testString',
             'name': 'testString',
             'description': 'testString',
-            'unique_instance_crns': ['testString'],
         })
 
         with self.assertRaises(AnsibleExitJson) as result:
             os.environ['IAM_IDENTITY_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_service_id.main()
+            ibm_trusted_profile.main()
 
         self.assertTrue(result.exception.args[0]['changed'])
         for field, value in resource.items():
             self.assertEqual(value, result.exception.args[0].get(field))
 
         mock_data = dict(
-            id='testString',
+            profile_id='testString',
             if_match='testString',
             name='testString',
             description='testString',
-            unique_instance_crns=['testString'],
         )
 
         self.update_mock.assert_called_once()
         self.assertTrue(checkResult(mock_data, self.update_mock.call_args.kwargs))
 
         read_mock_data = dict(
-            id='testString',
-            include_history=False,
+            profile_id='testString',
             include_activity=False,
         )
         # Set the variables that belong to the "read" path to `None`
@@ -279,47 +244,43 @@ class TestServiceIdModule(ModuleTestCase):
         self.assertTrue(checkResult(read_mock_data, self.read_mock.call_args.kwargs))
 
     @mock_operations
-    def test_update_ibm_iam_service_id_failed(self):
+    def test_update_ibm_trusted_profile_failed(self):
         """Test the "update" path - failed."""
         resource = {
-            'id': 'testString',
+            'profile_id': 'testString',
             'if_match': 'testString',
             'name': 'testString',
             'description': 'testString',
-            'unique_instance_crns': ['testString'],
         }
 
         self.read_mock.return_value = DetailedResponseMock(resource)
-        self.update_mock.side_effect = ApiException(400, message='Update ibm_iam_service_id error')
+        self.update_mock.side_effect = ApiException(400, message='Update ibm_trusted_profile error')
 
         set_module_args({
-            'id': 'testString',
+            'profile_id': 'testString',
             'if_match': 'testString',
             'name': 'testString',
             'description': 'testString',
-            'unique_instance_crns': ['testString'],
         })
 
         with self.assertRaises(AnsibleFailJson) as result:
             os.environ['IAM_IDENTITY_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_service_id.main()
+            ibm_trusted_profile.main()
 
-        self.assertEqual(result.exception.args[0]['msg'], 'Update ibm_iam_service_id error')
+        self.assertEqual(result.exception.args[0]['msg'], 'Update ibm_trusted_profile error')
 
         mock_data = dict(
-            id='testString',
+            profile_id='testString',
             if_match='testString',
             name='testString',
             description='testString',
-            unique_instance_crns=['testString'],
         )
 
         self.update_mock.assert_called_once()
         self.assertTrue(checkResult(mock_data, self.update_mock.call_args.kwargs))
 
         read_mock_data = dict(
-            id='testString',
-            include_history=False,
+            profile_id='testString',
             include_activity=False,
         )
         # Set the variables that belong to the "read" path to `None`
@@ -331,13 +292,13 @@ class TestServiceIdModule(ModuleTestCase):
         self.assertTrue(checkResult(read_mock_data, self.read_mock.call_args.kwargs))
 
     @mock_operations
-    def test_delete_ibm_iam_service_id_success(self):
+    def test_delete_ibm_trusted_profile_success(self):
         """Test the "delete" path - successfull."""
         self.read_mock.return_value = DetailedResponseMock()
         self.delete_mock.return_value = DetailedResponseMock()
 
         args = {
-            'id': 'testString',
+            'profile_id': 'testString',
             'state': 'absent',
         }
 
@@ -345,22 +306,21 @@ class TestServiceIdModule(ModuleTestCase):
 
         with self.assertRaises(AnsibleExitJson) as result:
             os.environ['IAM_IDENTITY_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_service_id.main()
+            ibm_trusted_profile.main()
 
         self.assertTrue(result.exception.args[0]['changed'])
         self.assertEqual(result.exception.args[0]['id'], 'testString')
         self.assertEqual(result.exception.args[0]['status'], 'deleted')
 
         mock_data = dict(
-            id='testString',
+            profile_id='testString',
         )
 
         self.delete_mock.assert_called_once()
         self.assertTrue(checkResult(mock_data, self.delete_mock.call_args.kwargs))
 
         read_mock_data = dict(
-            id='testString',
-            include_history=False,
+            profile_id='testString',
             include_activity=False,
         )
         # Set the variables that belong to the "read" path to `None`
@@ -372,13 +332,13 @@ class TestServiceIdModule(ModuleTestCase):
         self.assertTrue(checkResult(read_mock_data, self.read_mock.call_args.kwargs))
 
     @mock_operations
-    def test_delete_ibm_iam_service_id_not_exists(self):
+    def test_delete_ibm_trusted_profile_not_exists(self):
         """Test the "delete" path - not exists."""
         self.read_mock.side_effect = ApiException(404)
         self.delete_mock.return_value = DetailedResponseMock()
 
         args = {
-            'id': 'testString',
+            'profile_id': 'testString',
             'state': 'absent',
         }
 
@@ -386,21 +346,20 @@ class TestServiceIdModule(ModuleTestCase):
 
         with self.assertRaises(AnsibleExitJson) as result:
             os.environ['IAM_IDENTITY_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_service_id.main()
+            ibm_trusted_profile.main()
 
         self.assertFalse(result.exception.args[0]['changed'])
         self.assertEqual(result.exception.args[0]['id'], 'testString')
         self.assertEqual(result.exception.args[0]['status'], 'not_found')
 
         mock_data = dict(
-            id='testString',
+            profile_id='testString',
         )
 
         self.delete_mock.assert_not_called()
 
         read_mock_data = dict(
-            id='testString',
-            include_history=False,
+            profile_id='testString',
             include_activity=False,
         )
         # Set the variables that belong to the "read" path to `None`
@@ -412,32 +371,31 @@ class TestServiceIdModule(ModuleTestCase):
         self.assertTrue(checkResult(read_mock_data, self.read_mock.call_args.kwargs))
 
     @mock_operations
-    def test_delete_ibm_iam_service_id_failed(self):
+    def test_delete_ibm_trusted_profile_failed(self):
         """Test the "delete" path - failed."""
         self.read_mock.return_value = DetailedResponseMock()
-        self.delete_mock.side_effect = ApiException(400, message='Delete ibm_iam_service_id error')
+        self.delete_mock.side_effect = ApiException(400, message='Delete ibm_trusted_profile error')
 
         set_module_args({
-            'id': 'testString',
+            'profile_id': 'testString',
             'state': 'absent',
         })
 
         with self.assertRaises(AnsibleFailJson) as result:
             os.environ['IAM_IDENTITY_AUTH_TYPE'] = 'noAuth'
-            ibm_iam_service_id.main()
+            ibm_trusted_profile.main()
 
-        self.assertEqual(result.exception.args[0]['msg'], 'Delete ibm_iam_service_id error')
+        self.assertEqual(result.exception.args[0]['msg'], 'Delete ibm_trusted_profile error')
 
         mock_data = dict(
-            id='testString',
+            profile_id='testString',
         )
 
         self.delete_mock.assert_called_once()
         self.assertTrue(checkResult(mock_data, self.delete_mock.call_args.kwargs))
 
         read_mock_data = dict(
-            id='testString',
-            include_history=False,
+            profile_id='testString',
             include_activity=False,
         )
         # Set the variables that belong to the "read" path to `None`
